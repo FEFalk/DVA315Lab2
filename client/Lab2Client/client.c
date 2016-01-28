@@ -15,17 +15,6 @@
 
 #define MESSAGE "Hello!"
 
-typedef struct pt {
-	char		name[20];	// Name of planet
-	double		sx;			// X-axis position
-	double		sy;			// Y-axis position
-	double		vx;			// X-axis velocity
-	double		vy;			// Y-axis velocity
-	double		mass;		// Planet mass
-	struct pt*	next;		// Pointer to next planet in linked list
-	int			life;		// Planet life
-	char		pid[30];	// String containing ID of creating process
-} planet_type;
 
 void main(void) {
 
@@ -47,26 +36,26 @@ void main(void) {
 	double mass;
 	double life;
 	char pid[30];
-	planetName = calloc(20, sizeof(char *));
+	planetName = (char*)calloc(20, sizeof(char *));
 	int planetProcess = 0;
 	int i = 0;
 	while (planetProcess == 0){
 		printf("Planet Name: ");
-		gets("%s", &planetName);
-		if (strlen(planetName) > 20)printf("Error too big!");
+		gets(planetName);
+		if (strlen(planetName) > 20)printf("Error too big!\n");
 		else{
-			printf("/nPosition X: ");
-			getint("%d", &sx);
-			printf("/nPosition Y: ");
-			getint("%d", &sy);
-			printf("/nVelocity X: ");
-			getint("%d", &vx);
-			printf("/nVelocity Y: ");
-			getint("%d", &vy);
-			printf("/nMass: ");
-			getint("%d", &mass);
-			printf("/nLife: ");
-			getint("%d", &life);
+			printf("Position X: ");
+			scanf("%lf", &sx);
+			printf("Position Y: ");
+			scanf("%lf", &sy);
+			printf("Velocity X: ");
+			scanf("%lf", &vx);
+			printf("Velocity Y: ");
+			scanf("%lf", &vy);
+			printf("Mass: ");
+			scanf("%lf", &mass);
+			printf("Life: ");
+			scanf("%lf", &life);
 			pid[i] = i;
 			i++;
 			planetProcess = 1;
