@@ -39,6 +39,7 @@
 
 LRESULT WINAPI MainWndProc( HWND, UINT, WPARAM, LPARAM );
 DWORD WINAPI mailThread(LPVOID);
+planet_type *database;
 
 
 
@@ -65,7 +66,7 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdL
 	HWND hWnd;
 	DWORD threadID;
 	MSG msg;
-	
+
 
 							/* Create the window, 3 last parameters important */
 							/* The tile of the window, the callback function */
@@ -129,14 +130,23 @@ DWORD WINAPI mailThread(LPVOID arg) {
 							/* displays them in the presentation window                               */
 							/* NOTE: binary data can also be sent and received, e.g. planet structures*/
  
-	bytesRead = mailslotRead (mailbox, buffer, strlen(buffer)); 
+	bytesRead = mailslotRead (mailbox, &buffer, strlen(buffer)); 
 
+	//Create planet
 	if(bytesRead!= 0) {
+		planet_type *p = malloc(sizeof(planet_type));
+		memcpy(p, buffer, sizeof(planet_type));
+		p->next = NULL;
+		addPlanet(p);
+		threadCreate(planetThread, p);
+
 							/* NOTE: It is appropriate to replace this code with something */
 							/*       that match your needs here.                           */
 		posY++;  
 							/* (hDC is used reference the previously created window) */							
-		TextOut(hDC, 10, 50+posY%200, buffer, bytesRead);
+		TextOut(hDC, 10, 50+posY%200, p, bytesRead);
+
+		
 	}
 	else {
 							/* failed reading from mailslot                              */
@@ -145,6 +155,44 @@ DWORD WINAPI mailThread(LPVOID arg) {
   }
 
   return 0;
+}
+
+void planetThread(planet_type *planet)
+{
+	double atotx, atoty = 0;
+	double r, x1, x2, y1, y2;
+	planet_type *comparePlanet = database;
+
+	x1 = planet->sx;
+	x2 = comparePlanet->sx;
+	y1 = planet->sy;
+	y2 = comparePlanet->sy;
+
+	if (comparePlanet != 0) {
+		while (comparePlanet->next != 0)
+		{
+			if (comparePlanet != planet)
+			{
+				r = sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2));
+			}
+			comparePlanet = comparePlanet->next;
+		}
+	}
+
+	planet->life--;
+}
+
+void addPlanet(planet_type *newPlanet)
+{
+	planet_type *traverser = database;
+	if (traverser != 0) {
+		while (traverser->next != 0)
+		{
+			traverser = traverser->next;
+		}
+	}
+	traverser->next = newPlanet;
+
 }
 
 
