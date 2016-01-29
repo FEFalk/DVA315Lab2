@@ -40,8 +40,8 @@
 LRESULT WINAPI MainWndProc( HWND, UINT, WPARAM, LPARAM );
 DWORD WINAPI mailThread(LPVOID);
 planet_type *database;
-
-
+void planetThread(planet_type *planet);
+void addPlanet(planet_type *newPlanet);
 
 HDC hDC;		/* Handle to Device Context, gets set 1st time in MainWndProc */
 				/* we need it to access the window for printing and drawin */
@@ -129,7 +129,7 @@ DWORD WINAPI mailThread(LPVOID arg) {
 							/* in this example the server receives strings from the client side and   */
 							/* displays them in the presentation window                               */
 							/* NOTE: binary data can also be sent and received, e.g. planet structures*/
- 
+
 	bytesRead = mailslotRead (mailbox, &buffer, strlen(buffer)); 
 
 	//Create planet
@@ -138,13 +138,13 @@ DWORD WINAPI mailThread(LPVOID arg) {
 		memcpy(p, buffer, sizeof(planet_type));
 		p->next = NULL;
 		addPlanet(p);
-		threadCreate(planetThread, p);
+		threadCreate((LPTHREAD_START_ROUTINE)planetThread, p);
 
 							/* NOTE: It is appropriate to replace this code with something */
 							/*       that match your needs here.                           */
 		posY++;  
-							/* (hDC is used reference the previously created window) */							
-		TextOut(hDC, 10, 50+posY%200, p, bytesRead);
+							/* (hDC is used reference the previously created window) */	
+		TextOut(hDC, 10, 50+posY%200, p->name, sizeof(strlen(p->name)));
 
 		
 	}
@@ -159,39 +159,87 @@ DWORD WINAPI mailThread(LPVOID arg) {
 
 void planetThread(planet_type *planet)
 {
-	double atotx, atoty = 0;
-	double r, x1, x2, y1, y2;
+	double atotx=0, atoty = 0;
+	double r, x1, x2, y1, y2, cos, sin, G, a1, ax, ay, dt;
 	planet_type *comparePlanet = database;
-
-	x1 = planet->sx;
-	x2 = comparePlanet->sx;
-	y1 = planet->sy;
-	y2 = comparePlanet->sy;
+	G = 6.67259*pow(10, -11);
+	dt = 1;
 
 	if (comparePlanet != 0) {
-		while (comparePlanet->next != 0)
+		while (1)
 		{
+			
+
 			if (comparePlanet != planet)
 			{
+				x1 = planet->sx;
+				y1 = planet->sy;
+				x2 = comparePlanet->sx;
+				y2 = comparePlanet->sy;
+
 				r = sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2));
+				a1 = G*(comparePlanet->mass / pow(r, 2));
+				cos = (x2 - x1) / r;
+				sin = (y2 - y1) / r;
+				ax = a1*cos;
+				ay = a1*sin;
+				atotx = atotx+ax;
+				atoty = atoty+ay;
+
+
 			}
-			comparePlanet = comparePlanet->next;
+			
+			if (comparePlanet->next == 0)
+			{
+				
+				planet->vx = planet->vx + (atotx*dt);
+				planet->vy = planet->vy + (atoty*dt);
+
+				planet->sx = planet->sx + (planet->vx*dt);
+				planet->sy = planet->sy + (planet->vy*dt);
+				planet->life--;
+				atotx, atoty = 0;
+				if (planet->life <= 0)
+				{
+					//Remove because of life == 0
+				}
+				else if (planet->sx >= 800 || planet->sx <= 0)
+				{
+					//Remove because out of bounds in x
+				}
+				else if (planet->sy >= 600 || planet->sx <= 0)
+				{
+					//Remove because out of bounds in y
+				}
+				comparePlanet = database;
+				Sleep(10);
+			}
+			else
+				comparePlanet = comparePlanet->next;
+
 		}
 	}
 
-	planet->life--;
+	
 }
 
 void addPlanet(planet_type *newPlanet)
 {
 	planet_type *traverser = database;
-	if (traverser != 0) {
+	if (traverser != 0)
+	{
 		while (traverser->next != 0)
 		{
 			traverser = traverser->next;
 		}
+		traverser->next = newPlanet;
 	}
-	traverser->next = newPlanet;
+	else
+	{
+		database = newPlanet;
+	}
+
+	
 
 }
 
@@ -213,8 +261,6 @@ void addPlanet(planet_type *newPlanet)
 LRESULT CALLBACK MainWndProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam ) {
   
 	PAINTSTRUCT ps;
-	static int posX = 10;
-	int posY;
 	HANDLE context;
 	static DWORD color = 0;
   
@@ -236,10 +282,25 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam 
 
 							/* here we draw a simple sinus curve in the window    */
 							/* just to show how pixels are drawn                  */
-			posX += 4;
-			posY = (int) (10 * sin(posX / (double) 30) + 20);
-			SetPixel(hDC, posX % 547, posY, (COLORREF) color);
-			color += 12;
+
+			planet_type *traverser = database;
+			if (traverser != 0)
+			{
+				SetPixel(hDC, traverser->sx, traverser->sy, (COLORREF)color);
+				SetPixel(hDC, traverser->sx+1, traverser->sy, (COLORREF)color);
+				SetPixel(hDC, traverser->sx, traverser->sy+1, (COLORREF)color);
+				SetPixel(hDC, traverser->sx+1, traverser->sy+1, (COLORREF)color);
+				color += 12;
+				while (traverser->next != 0)
+				{
+					traverser = traverser->next;
+					SetPixel(hDC, traverser->sx, traverser->sy, (COLORREF)color);
+					color += 12;
+				}
+
+			}
+
+			
 			windowRefreshTimer (hWnd, UPDATE_FREQ);
 			break;
 							/****************************************************************\
