@@ -42,6 +42,8 @@ DWORD WINAPI mailThread(LPVOID);
 planet_type *database;
 void planetThread(planet_type *planet);
 void addPlanet(planet_type *newPlanet);
+void deletePlanet(planet_type *planetToRemove, char *deleteMessage);
+CRITICAL_SECTION criticalSection;
 
 HDC hDC;		/* Handle to Device Context, gets set 1st time in MainWndProc */
 				/* we need it to access the window for printing and drawin */
@@ -109,13 +111,14 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdL
 * Purpose: Handle incoming requests from clients                     *
 * NOTE: This function is important to you.                           *
 /********************************************************************/
+
 DWORD WINAPI mailThread(LPVOID arg) {
 
 	char buffer[1024];
 	DWORD bytesRead;
 	static int posY = 0;
+	int flag = 0;
 	HANDLE mailbox;
-
 							/* create a mailslot that clients can use to pass requests through   */
 							/* (the clients use the name below to get contact with the mailslot) */
 							/* NOTE: The name of a mailslot must start with "\\\\.\\mailslot\\"  */
@@ -123,22 +126,46 @@ DWORD WINAPI mailThread(LPVOID arg) {
 	
 	mailbox = mailslotCreate ("\\\\.\\mailslot\\mailbox");
 
-
+	InitializeCriticalSection(&criticalSection);
 	for(;;) {				
 							/* (ordinary file manipulating functions are used to read from mailslots) */
 							/* in this example the server receives strings from the client side and   */
 							/* displays them in the presentation window                               */
 							/* NOTE: binary data can also be sent and received, e.g. planet structures*/
-
-	bytesRead = mailslotRead (mailbox, &buffer, strlen(buffer)); 
-
-	//Create planet
-	if(bytesRead!= 0) {
-		planet_type *p = malloc(sizeof(planet_type));
-		memcpy(p, buffer, sizeof(planet_type));
-		p->next = NULL;
-		addPlanet(p);
-		threadCreate((LPTHREAD_START_ROUTINE)planetThread, p);
+		
+		bytesRead = mailslotRead (mailbox, &buffer, strlen(buffer)); 
+		//TESTING PLANETS
+		if(flag==0)
+		{
+			planet_type p1 = { "p1", 300, 300, 0, 0, 1000000000, NULL, 3000, NULL };
+			planet_type p2 = { "p2", 200, 300, 0, 0.008, 1000, NULL, 3000, NULL};
+			planet_type p3 = { "p3", 210, 300, 0.008, 0.008, 5000000, NULL, 30000, NULL };
+			planet_type *p11 = malloc(sizeof(planet_type));
+			memcpy(p11, &p1, sizeof(planet_type));
+			p11->next = NULL;
+			planet_type *p22 = malloc(sizeof(planet_type));
+			memcpy(p22, &p2, sizeof(planet_type));
+			p22->next = NULL;
+			planet_type *p33 = malloc(sizeof(planet_type));
+			memcpy(p33, &p3, sizeof(planet_type));
+			p33->next = NULL;
+			addPlanet(p11);
+			addPlanet(p22);
+			addPlanet(p33);
+			threadCreate((LPTHREAD_START_ROUTINE)planetThread, p11);
+			threadCreate((LPTHREAD_START_ROUTINE)planetThread, p22);
+			threadCreate((LPTHREAD_START_ROUTINE)planetThread, p33);
+			flag = 1;
+		}
+		//Create planet
+		if (bytesRead != 0) {
+			planet_type *p = malloc(sizeof(planet_type));
+			memcpy(p, buffer, sizeof(planet_type));
+			p->next = NULL;
+			addPlanet(p);
+			threadCreate((LPTHREAD_START_ROUTINE)planetThread, p);
+			
+		
 
 							/* NOTE: It is appropriate to replace this code with something */
 							/*       that match your needs here.                           */
@@ -147,29 +174,33 @@ DWORD WINAPI mailThread(LPVOID arg) {
 		TextOut(hDC, 10, 50+posY%200, p->name, sizeof(strlen(p->name)));
 
 		
+		}
+		else {
+								/* failed reading from mailslot                              */
+								/* (in this example we ignore this, and happily continue...) */
+		}
 	}
-	else {
-							/* failed reading from mailslot                              */
-							/* (in this example we ignore this, and happily continue...) */
-    }
-  }
-
+	DeleteCriticalSection(&criticalSection);
   return 0;
 }
 
 void planetThread(planet_type *planet)
 {
-	double atotx=0, atoty = 0;
+	double atotx = 0;
+	double atoty = 0;
 	double r, x1, x2, y1, y2, cos, sin, G, a1, ax, ay, dt;
 	planet_type *comparePlanet = database;
 	G = 6.67259*pow(10, -11);
-	dt = 1;
-
+	dt = 10;
+	BOOL firstLoop = TRUE;
 	if (comparePlanet != 0) {
 		while (1)
 		{
+			if (firstLoop)
+			{
+				/*EnterCriticalSection(&criticalSection);*/
+			}
 			
-
 			if (comparePlanet != planet)
 			{
 				x1 = planet->sx;
@@ -183,39 +214,48 @@ void planetThread(planet_type *planet)
 				sin = (y2 - y1) / r;
 				ax = a1*cos;
 				ay = a1*sin;
-				atotx = atotx+ax;
-				atoty = atoty+ay;
+				atotx += ax;
+				atoty += ay;
 
 
 			}
 			
 			if (comparePlanet->next == 0)
 			{
-				
-				planet->vx = planet->vx + (atotx*dt);
-				planet->vy = planet->vy + (atoty*dt);
+				planet->vx += atotx*dt;
+				planet->vy += atoty*dt;
 
-				planet->sx = planet->sx + (planet->vx*dt);
-				planet->sy = planet->sy + (planet->vy*dt);
+				planet->sx += planet->vx*dt;
+				planet->sy += planet->vy*dt;
 				planet->life--;
-				atotx, atoty = 0;
+				atotx = atoty = 0;
+				
+				comparePlanet = database;
+				firstLoop = TRUE;
 				if (planet->life <= 0)
 				{
-					//Remove because of life == 0
+					//Remove because of life == 0 -- pid
+					deletePlanet(planet, "Planet Life = 0");
 				}
 				else if (planet->sx >= 800 || planet->sx <= 0)
 				{
-					//Remove because out of bounds in x
+					//Remove because out of bounds in x -- pid
+					deletePlanet(planet, "Planet OOB in x");
 				}
 				else if (planet->sy >= 600 || planet->sx <= 0)
 				{
-					//Remove because out of bounds in y
+					//Remove because out of bounds in y -- pid
+					deletePlanet(planet, "Planet OOB in y");
 				}
-				comparePlanet = database;
+				/*LeaveCriticalSection(&criticalSection);*/
 				Sleep(10);
 			}
 			else
+			{
+				firstLoop = FALSE;
 				comparePlanet = comparePlanet->next;
+			}
+			
 
 		}
 	}
@@ -243,6 +283,32 @@ void addPlanet(planet_type *newPlanet)
 
 }
 
+void deletePlanet(planet_type *planetToRemove, char *deleteMessage)
+{
+	planet_type *prev;
+	char mailslotName[128];
+	sprintf(mailslotName, "\\\\.\\mailslot\\mailbox\\%d", planetToRemove->pid);
+
+	EnterCriticalSection(&criticalSection);
+	planet_type *traverser = database;
+	while (traverser != planetToRemove)
+	{
+		prev = traverser;
+		traverser = traverser->next;
+	}
+	prev->next = planetToRemove->next;
+	traverser->next = NULL;
+	free(traverser->pid);
+	free(traverser->name);
+	free(traverser->next);
+	free(traverser);
+	LeaveCriticalSection(&criticalSection);
+
+	HANDLE mail = mailslotConnect(TEXT(mailslotName));
+	mailslotWrite(mail, deleteMessage, 4);
+	mailslotClose(mail);
+}
+
 
 /********************************************************************\
 * Function: LRESULT CALLBACK MainWndProc(HWND, UINT, WPARAM, LPARAM) *
@@ -263,6 +329,7 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam 
 	PAINTSTRUCT ps;
 	HANDLE context;
 	static DWORD color = 0;
+	static DWORD colors[5];
   
 	switch( msg ) {
 							/**************************************************************/
@@ -283,21 +350,28 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam 
 							/* here we draw a simple sinus curve in the window    */
 							/* just to show how pixels are drawn                  */
 
+			colors[0] = RGB(255, 0, 0);
+			colors[1] = RGB(0, 255, 0);
+			colors[2] = RGB(0, 0, 255);
+			colors[3] = RGB(255, 255, 0);
+			colors[4] = RGB(255, 153, 0);
+
+			int i;
 			planet_type *traverser = database;
 			if (traverser != 0)
 			{
-				SetPixel(hDC, traverser->sx, traverser->sy, (COLORREF)color);
-				SetPixel(hDC, traverser->sx+1, traverser->sy, (COLORREF)color);
-				SetPixel(hDC, traverser->sx, traverser->sy+1, (COLORREF)color);
-				SetPixel(hDC, traverser->sx+1, traverser->sy+1, (COLORREF)color);
-				color += 12;
-				while (traverser->next != 0)
+				i = 0;
+				while (traverser != 0)
 				{
+					i %= 5;
+					SetPixel(hDC, traverser->sx, traverser->sy, (COLORREF)colors[i]);
+					//FATTEN LINES
+					//SetPixel(hDC, traverser->sx + 1, traverser->sy, (COLORREF)colors[i]);
+					//SetPixel(hDC, traverser->sx, traverser->sy + 1, (COLORREF)colors[i]);
+					//SetPixel(hDC, traverser->sx + 1, traverser->sy + 1, (COLORREF)colors[i]);
 					traverser = traverser->next;
-					SetPixel(hDC, traverser->sx, traverser->sy, (COLORREF)color);
-					color += 12;
+					i++;
 				}
-
 			}
 
 			
