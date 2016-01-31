@@ -42,6 +42,7 @@ DWORD WINAPI mailThread(LPVOID);
 planet_type *database;
 void planetThread(planet_type *planet);
 void addPlanet(planet_type *newPlanet);
+void deletePlanet(planet_type *planetToRemove, char *deleteMessage);
 CRITICAL_SECTION criticalSection;
 
 HDC hDC;		/* Handle to Device Context, gets set 1st time in MainWndProc */
@@ -138,16 +139,22 @@ DWORD WINAPI mailThread(LPVOID arg) {
 		{
 			planet_type p1 = { "p1", 300, 300, 0, 0, 1000000000, NULL, 3000, NULL };
 			planet_type p2 = { "p2", 200, 300, 0, 0.008, 1000, NULL, 3000, NULL};
+			planet_type p3 = { "p3", 210, 300, 0.008, 0.008, 5000000, NULL, 30000, NULL };
 			planet_type *p11 = malloc(sizeof(planet_type));
 			memcpy(p11, &p1, sizeof(planet_type));
 			p11->next = NULL;
 			planet_type *p22 = malloc(sizeof(planet_type));
 			memcpy(p22, &p2, sizeof(planet_type));
 			p22->next = NULL;
+			planet_type *p33 = malloc(sizeof(planet_type));
+			memcpy(p33, &p3, sizeof(planet_type));
+			p33->next = NULL;
 			addPlanet(p11);
 			addPlanet(p22);
+			addPlanet(p33);
 			threadCreate((LPTHREAD_START_ROUTINE)planetThread, p11);
 			threadCreate((LPTHREAD_START_ROUTINE)planetThread, p22);
+			threadCreate((LPTHREAD_START_ROUTINE)planetThread, p33);
 			flag = 1;
 		}
 		//Create planet
@@ -191,7 +198,7 @@ void planetThread(planet_type *planet)
 		{
 			if (firstLoop)
 			{
-				EnterCriticalSection(&criticalSection);
+				/*EnterCriticalSection(&criticalSection);*/
 			}
 			
 			if (comparePlanet != planet)
@@ -207,19 +214,19 @@ void planetThread(planet_type *planet)
 				sin = (y2 - y1) / r;
 				ax = a1*cos;
 				ay = a1*sin;
-				atotx = atotx+ax;
-				atoty = atoty+ay;
+				atotx += ax;
+				atoty += ay;
 
 
 			}
 			
 			if (comparePlanet->next == 0)
 			{
-				planet->vx = planet->vx + (atotx*dt);
-				planet->vy = planet->vy + (atoty*dt);
+				planet->vx += atotx*dt;
+				planet->vy += atoty*dt;
 
-				planet->sx = planet->sx + (planet->vx*dt);
-				planet->sy = planet->sy + (planet->vy*dt);
+				planet->sx += planet->vx*dt;
+				planet->sy += planet->vy*dt;
 				planet->life--;
 				atotx = atoty = 0;
 				
@@ -228,16 +235,19 @@ void planetThread(planet_type *planet)
 				if (planet->life <= 0)
 				{
 					//Remove because of life == 0 -- pid
+					deletePlanet(planet, "Planet Life = 0");
 				}
 				else if (planet->sx >= 800 || planet->sx <= 0)
 				{
 					//Remove because out of bounds in x -- pid
+					deletePlanet(planet, "Planet OOB in x");
 				}
 				else if (planet->sy >= 600 || planet->sx <= 0)
 				{
 					//Remove because out of bounds in y -- pid
+					deletePlanet(planet, "Planet OOB in y");
 				}
-				LeaveCriticalSection(&criticalSection);
+				/*LeaveCriticalSection(&criticalSection);*/
 				Sleep(10);
 			}
 			else
@@ -273,6 +283,32 @@ void addPlanet(planet_type *newPlanet)
 
 }
 
+void deletePlanet(planet_type *planetToRemove, char *deleteMessage)
+{
+	planet_type *prev;
+	char mailslotName[128];
+	sprintf(mailslotName, "\\\\.\\mailslot\\mailbox\\%d", planetToRemove->pid);
+
+	EnterCriticalSection(&criticalSection);
+	planet_type *traverser = database;
+	while (traverser != planetToRemove)
+	{
+		prev = traverser;
+		traverser = traverser->next;
+	}
+	prev->next = planetToRemove->next;
+	traverser->next = NULL;
+	free(traverser->pid);
+	free(traverser->name);
+	free(traverser->next);
+	free(traverser);
+	LeaveCriticalSection(&criticalSection);
+
+	HANDLE mail = mailslotConnect(TEXT(mailslotName));
+	mailslotWrite(mail, deleteMessage, 4);
+	mailslotClose(mail);
+}
+
 
 /********************************************************************\
 * Function: LRESULT CALLBACK MainWndProc(HWND, UINT, WPARAM, LPARAM) *
@@ -293,6 +329,7 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam 
 	PAINTSTRUCT ps;
 	HANDLE context;
 	static DWORD color = 0;
+	static DWORD colors[5];
   
 	switch( msg ) {
 							/**************************************************************/
@@ -313,21 +350,28 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam 
 							/* here we draw a simple sinus curve in the window    */
 							/* just to show how pixels are drawn                  */
 
+			colors[0] = RGB(255, 0, 0);
+			colors[1] = RGB(0, 255, 0);
+			colors[2] = RGB(0, 0, 255);
+			colors[3] = RGB(255, 255, 0);
+			colors[4] = RGB(255, 153, 0);
+
+			int i;
 			planet_type *traverser = database;
 			if (traverser != 0)
 			{
-				SetPixel(hDC, traverser->sx, traverser->sy, (COLORREF)color);
-				SetPixel(hDC, traverser->sx+1, traverser->sy, (COLORREF)color);
-				SetPixel(hDC, traverser->sx, traverser->sy+1, (COLORREF)color);
-				SetPixel(hDC, traverser->sx+1, traverser->sy+1, (COLORREF)color);
-				color += 12;
-				while (traverser->next != 0)
+				i = 0;
+				while (traverser != 0)
 				{
+					i %= 5;
+					SetPixel(hDC, traverser->sx, traverser->sy, (COLORREF)colors[i]);
+					//FATTEN LINES
+					//SetPixel(hDC, traverser->sx + 1, traverser->sy, (COLORREF)colors[i]);
+					//SetPixel(hDC, traverser->sx, traverser->sy + 1, (COLORREF)colors[i]);
+					//SetPixel(hDC, traverser->sx + 1, traverser->sy + 1, (COLORREF)colors[i]);
 					traverser = traverser->next;
-					SetPixel(hDC, traverser->sx, traverser->sy, (COLORREF)color);
-					color += 12;
+					i++;
 				}
-
 			}
 
 			
