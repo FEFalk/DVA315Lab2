@@ -135,28 +135,28 @@ DWORD WINAPI mailThread(LPVOID arg) {
 		
 		bytesRead = mailslotRead (mailbox, &buffer, strlen(buffer)); 
 		//TESTING PLANETS
-		if(flag==0)
-		{
-			planet_type p1 = { "p1", 300, 300, 0, 0, 1000000000, NULL, 100, NULL };
-			planet_type p2 = { "p2", 200, 300, 0, 0.008, 1000, NULL, 100, NULL};
-			planet_type p3 = { "p3", 210, 300, 0.008, 0.008, 5000000, NULL, 100, NULL };
-			planet_type *p11 = malloc(sizeof(planet_type));
-			memcpy(p11, &p1, sizeof(planet_type));
-			p11->next = NULL;
-			planet_type *p22 = malloc(sizeof(planet_type));
-			memcpy(p22, &p2, sizeof(planet_type));
-			p22->next = NULL;
-			planet_type *p33 = malloc(sizeof(planet_type));
-			memcpy(p33, &p3, sizeof(planet_type));
-			p33->next = NULL;
-			addPlanet(p11);
-			addPlanet(p22);
-			addPlanet(p33);
-			threadCreate((LPTHREAD_START_ROUTINE)planetThread, p11);
-			threadCreate((LPTHREAD_START_ROUTINE)planetThread, p22);
-			threadCreate((LPTHREAD_START_ROUTINE)planetThread, p33);
-			flag = 1;
-		}
+		//if(flag==0)
+		//{
+		//	planet_type p1 = { "p1", 300, 300, 0, 0, 1000000000, NULL, 1000, NULL };
+		//	planet_type p2 = { "p2", 200, 300, 0, 0.008, 1000, NULL, 1000, NULL};
+		//	planet_type p3 = { "p3", 210, 300, 0.008, 0.008, 5000000, NULL, 1000, NULL };
+		//	planet_type *p11 = malloc(sizeof(planet_type));
+		//	memcpy(p11, &p1, sizeof(planet_type));
+		//	p11->next = NULL;
+		//	planet_type *p22 = malloc(sizeof(planet_type));
+		//	memcpy(p22, &p2, sizeof(planet_type));
+		//	p22->next = NULL;
+		//	planet_type *p33 = malloc(sizeof(planet_type));
+		//	memcpy(p33, &p3, sizeof(planet_type));
+		//	p33->next = NULL;
+		//	addPlanet(p11);
+		//	addPlanet(p22);
+		//	addPlanet(p33);
+		//	threadCreate((LPTHREAD_START_ROUTINE)planetThread, p11);
+		//	threadCreate((LPTHREAD_START_ROUTINE)planetThread, p22);
+		//	threadCreate((LPTHREAD_START_ROUTINE)planetThread, p33);
+		//	flag = 1;
+		//}
 		//Create planet
 		if (bytesRead != 0) {
 			planet_type *p = malloc(sizeof(planet_type));
