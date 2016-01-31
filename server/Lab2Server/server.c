@@ -42,6 +42,7 @@ DWORD WINAPI mailThread(LPVOID);
 planet_type *database;
 void planetThread(planet_type *planet);
 void addPlanet(planet_type *newPlanet);
+CRITICAL_SECTION criticalSection;
 
 HDC hDC;		/* Handle to Device Context, gets set 1st time in MainWndProc */
 				/* we need it to access the window for printing and drawin */
@@ -109,13 +110,14 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdL
 * Purpose: Handle incoming requests from clients                     *
 * NOTE: This function is important to you.                           *
 /********************************************************************/
+
 DWORD WINAPI mailThread(LPVOID arg) {
 
 	char buffer[1024];
 	DWORD bytesRead;
 	static int posY = 0;
+	int flag = 0;
 	HANDLE mailbox;
-
 							/* create a mailslot that clients can use to pass requests through   */
 							/* (the clients use the name below to get contact with the mailslot) */
 							/* NOTE: The name of a mailslot must start with "\\\\.\\mailslot\\"  */
@@ -123,22 +125,40 @@ DWORD WINAPI mailThread(LPVOID arg) {
 	
 	mailbox = mailslotCreate ("\\\\.\\mailslot\\mailbox");
 
-
+	InitializeCriticalSection(&criticalSection);
 	for(;;) {				
 							/* (ordinary file manipulating functions are used to read from mailslots) */
 							/* in this example the server receives strings from the client side and   */
 							/* displays them in the presentation window                               */
 							/* NOTE: binary data can also be sent and received, e.g. planet structures*/
-
-	bytesRead = mailslotRead (mailbox, &buffer, strlen(buffer)); 
-
-	//Create planet
-	if(bytesRead!= 0) {
-		planet_type *p = malloc(sizeof(planet_type));
-		memcpy(p, buffer, sizeof(planet_type));
-		p->next = NULL;
-		addPlanet(p);
-		threadCreate((LPTHREAD_START_ROUTINE)planetThread, p);
+		
+		bytesRead = mailslotRead (mailbox, &buffer, strlen(buffer)); 
+		//TESTING PLANETS
+		if(flag==0)
+		{
+			planet_type p1 = { "p1", 300, 300, 0, 0, 1000000000, NULL, 3000, NULL };
+			planet_type p2 = { "p2", 200, 300, 0, 0.008, 1000, NULL, 3000, NULL};
+			planet_type *p11 = malloc(sizeof(planet_type));
+			memcpy(p11, &p1, sizeof(planet_type));
+			p11->next = NULL;
+			planet_type *p22 = malloc(sizeof(planet_type));
+			memcpy(p22, &p2, sizeof(planet_type));
+			p22->next = NULL;
+			addPlanet(p11);
+			addPlanet(p22);
+			threadCreate((LPTHREAD_START_ROUTINE)planetThread, p11);
+			threadCreate((LPTHREAD_START_ROUTINE)planetThread, p22);
+			flag = 1;
+		}
+		//Create planet
+		if (bytesRead != 0) {
+			planet_type *p = malloc(sizeof(planet_type));
+			memcpy(p, buffer, sizeof(planet_type));
+			p->next = NULL;
+			addPlanet(p);
+			threadCreate((LPTHREAD_START_ROUTINE)planetThread, p);
+			
+		
 
 							/* NOTE: It is appropriate to replace this code with something */
 							/*       that match your needs here.                           */
@@ -147,29 +167,33 @@ DWORD WINAPI mailThread(LPVOID arg) {
 		TextOut(hDC, 10, 50+posY%200, p->name, sizeof(strlen(p->name)));
 
 		
+		}
+		else {
+								/* failed reading from mailslot                              */
+								/* (in this example we ignore this, and happily continue...) */
+		}
 	}
-	else {
-							/* failed reading from mailslot                              */
-							/* (in this example we ignore this, and happily continue...) */
-    }
-  }
-
+	DeleteCriticalSection(&criticalSection);
   return 0;
 }
 
 void planetThread(planet_type *planet)
 {
-	double atotx=0, atoty = 0;
+	double atotx = 0;
+	double atoty = 0;
 	double r, x1, x2, y1, y2, cos, sin, G, a1, ax, ay, dt;
 	planet_type *comparePlanet = database;
 	G = 6.67259*pow(10, -11);
-	dt = 1;
-
+	dt = 10;
+	BOOL firstLoop = TRUE;
 	if (comparePlanet != 0) {
 		while (1)
 		{
+			if (firstLoop)
+			{
+				EnterCriticalSection(&criticalSection);
+			}
 			
-
 			if (comparePlanet != planet)
 			{
 				x1 = planet->sx;
@@ -191,31 +215,37 @@ void planetThread(planet_type *planet)
 			
 			if (comparePlanet->next == 0)
 			{
-				
 				planet->vx = planet->vx + (atotx*dt);
 				planet->vy = planet->vy + (atoty*dt);
 
 				planet->sx = planet->sx + (planet->vx*dt);
 				planet->sy = planet->sy + (planet->vy*dt);
 				planet->life--;
-				atotx, atoty = 0;
+				atotx = atoty = 0;
+				
+				comparePlanet = database;
+				firstLoop = TRUE;
 				if (planet->life <= 0)
 				{
-					//Remove because of life == 0
+					//Remove because of life == 0 -- pid
 				}
 				else if (planet->sx >= 800 || planet->sx <= 0)
 				{
-					//Remove because out of bounds in x
+					//Remove because out of bounds in x -- pid
 				}
 				else if (planet->sy >= 600 || planet->sx <= 0)
 				{
-					//Remove because out of bounds in y
+					//Remove because out of bounds in y -- pid
 				}
-				comparePlanet = database;
+				LeaveCriticalSection(&criticalSection);
 				Sleep(10);
 			}
 			else
+			{
+				firstLoop = FALSE;
 				comparePlanet = comparePlanet->next;
+			}
+			
 
 		}
 	}
