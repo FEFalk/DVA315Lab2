@@ -137,9 +137,9 @@ DWORD WINAPI mailThread(LPVOID arg) {
 		//TESTING PLANETS
 		if(flag==0)
 		{
-			planet_type p1 = { "p1", 300, 300, 0, 0, 1000000000, NULL, 3000, NULL };
-			planet_type p2 = { "p2", 200, 300, 0, 0.008, 1000, NULL, 3000, NULL};
-			planet_type p3 = { "p3", 210, 300, 0.008, 0.008, 5000000, NULL, 30000, NULL };
+			planet_type p1 = { "p1", 300, 300, 0, 0, 1000000000, NULL, 100, NULL };
+			planet_type p2 = { "p2", 200, 300, 0, 0.008, 1000, NULL, 100, NULL};
+			planet_type p3 = { "p3", 210, 300, 0.008, 0.008, 5000000, NULL, 100, NULL };
 			planet_type *p11 = malloc(sizeof(planet_type));
 			memcpy(p11, &p1, sizeof(planet_type));
 			p11->next = NULL;
@@ -236,16 +236,19 @@ void planetThread(planet_type *planet)
 				{
 					//Remove because of life == 0 -- pid
 					deletePlanet(planet, "Planet Life = 0");
+					break;
 				}
 				else if (planet->sx >= 800 || planet->sx <= 0)
 				{
 					//Remove because out of bounds in x -- pid
 					deletePlanet(planet, "Planet OOB in x");
+					break;
 				}
 				else if (planet->sy >= 600 || planet->sx <= 0)
 				{
 					//Remove because out of bounds in y -- pid
 					deletePlanet(planet, "Planet OOB in y");
+					break;
 				}
 				/*LeaveCriticalSection(&criticalSection);*/
 				Sleep(10);
@@ -285,11 +288,12 @@ void addPlanet(planet_type *newPlanet)
 
 void deletePlanet(planet_type *planetToRemove, char *deleteMessage)
 {
-	planet_type *prev;
+	planet_type *prev = database;
 	char mailslotName[128];
 	sprintf(mailslotName, "\\\\.\\mailslot\\mailbox\\%d", planetToRemove->pid);
 
 	EnterCriticalSection(&criticalSection);
+
 	planet_type *traverser = database;
 	while (traverser != planetToRemove)
 	{
@@ -297,10 +301,11 @@ void deletePlanet(planet_type *planetToRemove, char *deleteMessage)
 		traverser = traverser->next;
 	}
 	prev->next = planetToRemove->next;
+	//If the planet to remove is the root-planet
+	if (traverser == database)
+		database = traverser->next;
 	traverser->next = NULL;
-	free(traverser->pid);
-	free(traverser->name);
-	free(traverser->next);
+
 	free(traverser);
 	LeaveCriticalSection(&criticalSection);
 
@@ -356,6 +361,7 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam 
 			colors[3] = RGB(255, 255, 0);
 			colors[4] = RGB(255, 153, 0);
 
+			EnterCriticalSection(&criticalSection);
 			int i;
 			planet_type *traverser = database;
 			if (traverser != 0)
@@ -363,6 +369,7 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam 
 				i = 0;
 				while (traverser != 0)
 				{
+					
 					i %= 5;
 					SetPixel(hDC, traverser->sx, traverser->sy, (COLORREF)colors[i]);
 					//FATTEN LINES
@@ -371,9 +378,10 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam 
 					//SetPixel(hDC, traverser->sx + 1, traverser->sy + 1, (COLORREF)colors[i]);
 					traverser = traverser->next;
 					i++;
+					
 				}
 			}
-
+			LeaveCriticalSection(&criticalSection);
 			
 			windowRefreshTimer (hWnd, UPDATE_FREQ);
 			break;
