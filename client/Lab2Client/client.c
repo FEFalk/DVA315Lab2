@@ -94,15 +94,18 @@ void createPlanet(int threadsArrayIndex) {
 	for (;;) {
 
 		bytesRead = mailslotRead(mailbox, &buffer, strlen(buffer));
+
+
 		//Create planet
 		if (bytesRead != 0) {
-			if (buffer == "Life")
+			buffer[bytesRead] = '\0';
+			if (strcmp(buffer, "Life") == 0)
 			{
 				printf("Planet Life = 0\n");
 				deletePlanetThread(threadsArrayIndex);
 				break;
 			}
-			else if (buffer == "OOBX")
+			else if (strcmp(buffer, "OOBX") == 0)
 			{
 				printf("Planet OOB = X\n");
 				deletePlanetThread(threadsArrayIndex);

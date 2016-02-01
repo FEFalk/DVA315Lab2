@@ -123,6 +123,7 @@ int	mailslotRead(HANDLE mailbox, void *msg, int msgSize) {
 		return 0;
 	}
 
+
 	if (messages != 0)
 	{
 		fResult = ReadFile(mailbox, (char*)msg, nextSize, &cbRead, (LPOVERLAPPED)NULL);
