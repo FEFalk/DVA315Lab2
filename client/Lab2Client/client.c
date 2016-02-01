@@ -25,7 +25,7 @@ void createPlanet(int threadsArrayIndex) {
 	HANDLE mailSlot;
 	DWORD bytesWritten = 0;
 	DWORD threadId = GetCurrentThreadId();
-	planet_type *planet = (planet_type*)calloc(50, sizeof(planet_type));
+	planet_type *planet = (planet_type*)calloc(1, sizeof(planet_type));
 	BOOL loop = TRUE;
 	DWORD bytesRead;
 	char buffer[1024];
@@ -36,6 +36,8 @@ void createPlanet(int threadsArrayIndex) {
 
 	//create mailbox threadid
 	char mailslotName[128];
+	int c;
+	char *p;
 	sprintf(mailslotName, "\\\\.\\mailslot\\%d", threadId);
 	mailbox = mailslotCreate(mailslotName);
 	
@@ -52,32 +54,36 @@ void createPlanet(int threadsArrayIndex) {
 	EnterCriticalSection(&criticalSection);
 	while (loop) 
 	{
+		
 		printf("Planet Name: ");
 		fgets(planet->name, 20, (stdin));
+		if ((p = strchr(planet->name, '\n')) != NULL)
+			*p = '\0';
 		if (strlen(planet->name) > 20)printf("Error too big!\n");
 		else 
 		{
 			fflush(stdin);
 			sprintf(planet->pid, "%d", threadId);
 			printf("Position X: ");
-			scanf("%lf", &planet->sx);
+			scanf(" %lf", &planet->sx);
 			fflush(stdin);
 			printf("Position Y: ");
-			scanf("%lf", &planet->sy);
+			scanf(" %lf", &planet->sy);
 			fflush(stdin);
 			printf("Velocity X: ");
-			scanf("%lf", &planet->vx);
+			scanf(" %lf", &planet->vx);
 			fflush(stdin);
 			printf("Velocity Y: ");
-			scanf("%lf", &planet->vy);
+			scanf(" %lf", &planet->vy);
 			fflush(stdin);
 			printf("Mass: ");
-			scanf("%lf", &planet->mass);
+			scanf(" %lf", &planet->mass);
 			fflush(stdin);
 			printf("Life: ");
-			scanf("%d", &planet->life);
+			scanf(" %d", &planet->life);
 			fflush(stdin);
-			loop = FALSE;	
+			loop = FALSE;
+			while ((c = getchar()) != '\n' && c != EOF);
 		}
 	}
 	LeaveCriticalSection(&criticalSection);
@@ -101,19 +107,19 @@ void createPlanet(int threadsArrayIndex) {
 			buffer[bytesRead] = '\0';
 			if (strcmp(buffer, "Life") == 0)
 			{
-				printf("Planet Life = 0\n");
+				printf("\nPlanet Life = 0\n");
 				deletePlanetThread(threadsArrayIndex);
 				break;
 			}
 			else if (strcmp(buffer, "OOBX") == 0)
 			{
-				printf("Planet OOB = X\n");
+				printf("\nPlanet OOB: X\n");
 				deletePlanetThread(threadsArrayIndex);
 				break;
 			}
 			else
 			{
-				printf("Planet OOB = Y\n");
+				printf("\nPlanet OOB: Y\n");
 				deletePlanetThread(threadsArrayIndex);
 				break;
 			}
@@ -203,7 +209,7 @@ void main(void) {
 	}
 	
 	DeleteCriticalSection(&criticalSection);
-	Sleep(2000);
+	Sleep(500);
 
 	return;
 }
