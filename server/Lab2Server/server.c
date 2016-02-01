@@ -235,19 +235,19 @@ void planetThread(planet_type *planet)
 				if (planet->life <= 0)
 				{
 					//Remove because of life == 0 -- pid
-					deletePlanet(planet, "Planet Life = 0");
+					deletePlanet(planet, "Life");
 					break;
 				}
 				else if (planet->sx >= 800 || planet->sx <= 0)
 				{
 					//Remove because out of bounds in x -- pid
-					deletePlanet(planet, "Planet OOB in x");
+					deletePlanet(planet, "OOBX");
 					break;
 				}
 				else if (planet->sy >= 600 || planet->sx <= 0)
 				{
 					//Remove because out of bounds in y -- pid
-					deletePlanet(planet, "Planet OOB in y");
+					deletePlanet(planet, "OOBY");
 					break;
 				}
 				/*LeaveCriticalSection(&criticalSection);*/
@@ -290,7 +290,7 @@ void deletePlanet(planet_type *planetToRemove, char *deleteMessage)
 {
 	planet_type *prev = database;
 	char mailslotName[128];
-	sprintf(mailslotName, "\\\\.\\mailslot\\mailbox\\%d", planetToRemove->pid);
+	sprintf(mailslotName, "\\\\.\\mailslot\\%s", planetToRemove->pid);
 
 	EnterCriticalSection(&criticalSection);
 
@@ -309,7 +309,7 @@ void deletePlanet(planet_type *planetToRemove, char *deleteMessage)
 	free(traverser);
 	LeaveCriticalSection(&criticalSection);
 
-	HANDLE mail = mailslotConnect("\\\\.\\mailslot\\threadId");
+	HANDLE mail = mailslotConnect(mailslotName);
 	mailslotWrite(mail, deleteMessage, 4);
 	mailslotClose(mail);
 }

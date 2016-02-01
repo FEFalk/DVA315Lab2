@@ -51,9 +51,9 @@ HANDLE mailslotCreate(char *name) {
 	if (newMailSlot == INVALID_HANDLE_VALUE)
 	{
 		printf("CreateMailslot failed with %d\n", GetLastError());
+		MessageBox(NULL, "CreateMailslot failed", "Error!!", MB_OK);
 		return FALSE;
 	}
-	else printf("Mailslot created successfully.\n");
 
 	return newMailSlot;
 }
@@ -118,18 +118,22 @@ int	mailslotRead(HANDLE mailbox, void *msg, int msgSize) {
 
 	fResult = GetMailslotInfo(mailbox, (LPDWORD)NULL, &nextSize, &messages, (LPDWORD)NULL);
 	if (!fResult) {
+		MessageBox(NULL, "GetMailslotInfo Error", "Error!!", MB_OK);
 		printf("GetMailslotInfo Error: %d\n", GetLastError());
 		return 0;
 	}
 
-	*((char**)msg) = (char*)calloc(nextSize, sizeof(char));
-
-	fResult = ReadFile(mailbox, *((char**)msg), nextSize, &cbRead, (LPOVERLAPPED)NULL);
-	if (!fResult) {
-		printf("ReadFile Error: %d\n", GetLastError());
-		return 0;
+	if (messages != 0)
+	{
+		fResult = ReadFile(mailbox, (char*)msg, nextSize, &cbRead, (LPOVERLAPPED)NULL);
+		if (!fResult) {
+			printf("ReadFile Error: %d\n", GetLastError());
+			MessageBox(NULL, "ReadFile Error", "Error!!", MB_OK);
+			return 0;
+		}
+		return cbRead;
 	}
-	return cbRead;
+	return 0;
 }
 
 int mailslotClose(HANDLE mailSlot) {
