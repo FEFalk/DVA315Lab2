@@ -21,6 +21,14 @@ HANDLE threads[MAX_THREADS];
 int counter = 0;
 void deletePlanetThread(int index);
 
+/****************************************************************
+* Function: createPlanet  										*
+* Purpose: Creates a new planet through I/O and sends it to		*
+*			 server. Waits for incoming messages from server.	*
+* @param threadsArrayIndex - The index of the thread in the		*
+*					handle-array(used to know which element		*
+*					to delete).									*
+*****************************************************************/
 void createPlanet(int threadsArrayIndex) {
 	HANDLE mailSlot;
 	DWORD bytesWritten = 0;
@@ -30,17 +38,18 @@ void createPlanet(int threadsArrayIndex) {
 	DWORD bytesRead;
 	char buffer[1024];
 	HANDLE mailbox;
+	int c;
+	char *p;
 	/* create a mailslot that clients can use to pass requests through   */
 	/* (the clients use the name below to get contact with the mailslot) */
 	/* NOTE: The name of a mailslot must start with "\\\\.\\mailslot\\"  */
 
-	//create mailbox threadid
+	//Create mailbox threadid
 	char mailslotName[128];
-	int c;
-	char *p;
 	sprintf(mailslotName, "\\\\.\\mailslot\\%d", threadId);
 	mailbox = mailslotCreate(mailslotName);
 	
+	//Connect to the server mailbox
 	mailSlot = mailslotConnect("\\\\.\\mailslot\\mailbox");
 	
 	if (mailSlot == INVALID_HANDLE_VALUE) {
@@ -50,44 +59,34 @@ void createPlanet(int threadsArrayIndex) {
 	else {
 		printf("Successfully got the mailslot\n");
 	}
-
+	//I/O for creating a new planet
 	EnterCriticalSection(&criticalSection);
-	while (loop) 
+	printf("Planet Name: ");
+	fgets(planet->name, 20, (stdin));
+	if ((p = strchr(planet->name, '\n')) != NULL)
+		*p = '\0';
+	if (strlen(planet->name) > 20)printf("Error too big!\n");
+	else 
 	{
-		
-		printf("Planet Name: ");
-		fgets(planet->name, 20, (stdin));
-		if ((p = strchr(planet->name, '\n')) != NULL)
-			*p = '\0';
-		if (strlen(planet->name) > 20)printf("Error too big!\n");
-		else 
-		{
-			fflush(stdin);
-			sprintf(planet->pid, "%d", threadId);
-			printf("Position X: ");
-			scanf(" %lf", &planet->sx);
-			fflush(stdin);
-			printf("Position Y: ");
-			scanf(" %lf", &planet->sy);
-			fflush(stdin);
-			printf("Velocity X: ");
-			scanf(" %lf", &planet->vx);
-			fflush(stdin);
-			printf("Velocity Y: ");
-			scanf(" %lf", &planet->vy);
-			fflush(stdin);
-			printf("Mass: ");
-			scanf(" %lf", &planet->mass);
-			fflush(stdin);
-			printf("Life: ");
-			scanf(" %d", &planet->life);
-			fflush(stdin);
-			loop = FALSE;
-			while ((c = getchar()) != '\n' && c != EOF);
-		}
+		sprintf(planet->pid, "%d", threadId);
+		printf("Position X: ");
+		scanf(" %lf", &planet->sx);
+		printf("Position Y: ");
+		scanf(" %lf", &planet->sy);
+		printf("Velocity X: ");
+		scanf(" %lf", &planet->vx);
+		printf("Velocity Y: ");
+		scanf(" %lf", &planet->vy);
+		printf("Mass: ");
+		scanf(" %lf", &planet->mass);
+		printf("Life: ");
+		scanf(" %d", &planet->life);
+		loop = FALSE;
+		while ((c = getchar()) != '\n' && c != EOF);
 	}
 	LeaveCriticalSection(&criticalSection);
 
+	//Sends the planet to server through the mailslot
 	bytesWritten = mailslotWrite(mailSlot, planet, sizeof(*planet));
 	if (bytesWritten != -1)
 		printf("data sent to server (bytes = %d)\n", bytesWritten);
@@ -95,43 +94,48 @@ void createPlanet(int threadsArrayIndex) {
 	else
 		printf("failed sending data to server\n");
 
+	//Gives main-thread permission to continue
 	ReleaseSemaphore(semaphore, 1, NULL);
 
+	//READ-LOOP
 	for (;;) {
 
 		bytesRead = mailslotRead(mailbox, &buffer, strlen(buffer));
 
 
-		//Create planet
+		//If a message is recieved, print out the reason why the planet died.
 		if (bytesRead != 0) {
 			buffer[bytesRead] = '\0';
 			if (strcmp(buffer, "Life") == 0)
 			{
 				printf("\nPlanet Life = 0\n");
-				deletePlanetThread(threadsArrayIndex);
 				break;
 			}
 			else if (strcmp(buffer, "OOBX") == 0)
 			{
 				printf("\nPlanet OOB: X\n");
-				deletePlanetThread(threadsArrayIndex);
 				break;
 			}
 			else
 			{
 				printf("\nPlanet OOB: Y\n");
-				deletePlanetThread(threadsArrayIndex);
 				break;
 			}
 		}
 	}
+	free(planet);
+	deletePlanetThread(threadsArrayIndex);
 	mailslotClose(mailSlot);
-	Sleep(100);
+	mailslotClose(mailbox);
 
-	return;
 }
 
-
+/********************************************************************\
+* Function: addThread											     *
+* Purpose: Adds a thread to the thread-handles array.                *
+* @return - Returns TRUE or FALSE depending on if the array had an	 *
+*			open spot or not.										 *
+/********************************************************************/
 BOOL addThread()
 {
 	for (int i = 0; i < MAX_THREADS; i++)
@@ -146,6 +150,11 @@ BOOL addThread()
 	return FALSE;
 }
 
+/********************************************************************\
+* Function: deleteThread											 *
+* Purpose: Deletes a thread-handle from the array and closes it.     *
+* @param index - Index of the thread to delete.						 *
+/********************************************************************/
 void deletePlanetThread(int index)
 {
 	CloseHandle(threads[index]);
@@ -163,6 +172,8 @@ void main(void) {
 		return 1;
 	}
 	InitializeCriticalSection(&criticalSection);
+
+	// I/O-loop for creating planets or quitting main-process.
 	while(planetmaking == TRUE)
 	{ 
 		WaitForSingleObject(semaphore, INFINITE);
@@ -188,20 +199,7 @@ void main(void) {
 			else printf("Wrong input!\n");
 		}
 	}
-		/* NOTE: replace code below for sending planet data to the server. */
-	
-		/* send a friendly greeting to the server */
-		/* NOTE: The messages sent to the server need not to be of equal size.       */
-		/* Messages can be of different sizes as long as they don't exceed the       */
-		/* maximum message size that the mailslot can handle (defined upon creation).*/
 
-
-	
-	//CloseHandle(threads[1]);
-
-		/* (sleep for a while, enables you to catch a glimpse of what the */
-		/*  client prints on the console)    
-		*/
 	for (int i = 0; i < MAX_THREADS; i++)
 	{
 		if(threads[i]!=NULL)
@@ -209,7 +207,8 @@ void main(void) {
 	}
 	
 	DeleteCriticalSection(&criticalSection);
-	Sleep(500);
+	printf("\nShutting down main-process...\n");
+	Sleep(5);
 
-	return;
+	return 0;
 }

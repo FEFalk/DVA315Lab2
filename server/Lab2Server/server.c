@@ -184,6 +184,11 @@ DWORD WINAPI mailThread(LPVOID arg) {
   return 0;
 }
 
+/********************************************************************\
+* Function: planetThread                                             *
+* Purpose: Handle calculation of planets' new position               *
+* @param planet - The planet to calculate the new position for       *
+/********************************************************************/
 void planetThread(planet_type *planet)
 {
 	double atotx = 0;
@@ -196,9 +201,11 @@ void planetThread(planet_type *planet)
 	if (comparePlanet != 0) {
 		while (1)
 		{
+			//	Using critical section for each whole "database-loop"
+			//	as it could get messy with the pointers.
 			if (firstLoop)
 			{
-				/*EnterCriticalSection(&criticalSection);*/
+				EnterCriticalSection(&criticalSection);
 			}
 			
 			if (comparePlanet != planet)
@@ -219,7 +226,9 @@ void planetThread(planet_type *planet)
 
 
 			}
-			
+			// If we reach the end of the loop we enter a new position for the 
+			// planet and reset all the values for the next loop. 
+			// Also death-check of the planet.
 			if (comparePlanet->next == 0)
 			{
 				planet->vx += atotx*dt;
@@ -234,23 +243,23 @@ void planetThread(planet_type *planet)
 				firstLoop = TRUE;
 				if (planet->life <= 0)
 				{
-					//Remove because of life == 0 -- pid
+					//Remove because of life == 0
 					deletePlanet(planet, "Life");
 					break;
 				}
 				else if (planet->sx >= 800 || planet->sx <= 0)
 				{
-					//Remove because out of bounds in x -- pid
+					//Remove because out of bounds in x
 					deletePlanet(planet, "OOBX");
 					break;
 				}
-				else if (planet->sy >= 600 || planet->sx <= 0)
+				else if (planet->sy >= 600 || planet->sy <= 0)
 				{
-					//Remove because out of bounds in y -- pid
+					//Remove because out of bounds in y
 					deletePlanet(planet, "OOBY");
 					break;
 				}
-				/*LeaveCriticalSection(&criticalSection);*/
+				LeaveCriticalSection(&criticalSection);
 				Sleep(10);
 			}
 			else
@@ -266,9 +275,15 @@ void planetThread(planet_type *planet)
 	
 }
 
+/********************************************************************\
+* Function: addPlanet												 *
+* Purpose: Adds new planet to the database linked list               *
+* @param newPlanet - The new planet to be added				         *
+/********************************************************************/
 void addPlanet(planet_type *newPlanet)
 {
 	planet_type *traverser = database;
+	EnterCriticalSection(&criticalSection);
 	if (traverser != 0)
 	{
 		while (traverser->next != 0)
@@ -281,11 +296,17 @@ void addPlanet(planet_type *newPlanet)
 	{
 		database = newPlanet;
 	}
-
+	LeaveCriticalSection(&criticalSection);
 	
 
 }
-
+/********************************************************************\
+* Function: deletePlanet											 *
+* Purpose: Deletes a planet from the database linked list            *
+* @param planetToRemove - The planet to be removed					 *
+* @param deleteMessage - The message to be sent to the client about	 *
+*						  how the planet died						 *
+/********************************************************************/
 void deletePlanet(planet_type *planetToRemove, char *deleteMessage)
 {
 	planet_type *prev = database;
@@ -352,24 +373,25 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam 
 							/*       e.g. draw a planet system)                           */
 							/* NOTE: this is referred to as the 'graphics' thread in the lab spec. */
 
-							/* here we draw a simple sinus curve in the window    */
-							/* just to show how pixels are drawn                  */
 
+			//Creating a simple color-array.
 			colors[0] = RGB(255, 0, 0);
 			colors[1] = RGB(0, 255, 0);
 			colors[2] = RGB(0, 0, 255);
 			colors[3] = RGB(255, 255, 0);
 			colors[4] = RGB(255, 153, 0);
 
+			//Critical section so we don't get messy pointers
 			EnterCriticalSection(&criticalSection);
 			int i;
 			planet_type *traverser = database;
+
+			//A loop to draw all the planets with different colors.
 			if (traverser != 0)
 			{
 				i = 0;
 				while (traverser != 0)
 				{
-					
 					i %= 5;
 					SetPixel(hDC, traverser->sx, traverser->sy, (COLORREF)colors[i]);
 					//FATTEN LINES
@@ -378,7 +400,6 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam 
 					SetPixel(hDC, traverser->sx + 1, traverser->sy + 1, (COLORREF)colors[i]);
 					traverser = traverser->next;
 					i++;
-					
 				}
 			}
 			LeaveCriticalSection(&criticalSection);
@@ -394,7 +415,7 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam 
 							/* NOTE: The code for this message can be removed. It's just */
 							/*       for showing something in the window.                */
 			context = BeginPaint( hWnd, &ps ); /* (you can safely remove the following line of code) */
-			TextOut( context, 10, 10, "Hello, World!", 13 ); /* 13 is the string length */
+			TextOut( context, 10, 10, "Solar System", 13 ); /* 13 is the string length */
 			EndPaint( hWnd, &ps );
 			break;
 							/**************************************************************\
