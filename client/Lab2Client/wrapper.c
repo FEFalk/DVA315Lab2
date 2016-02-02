@@ -81,7 +81,7 @@ HANDLE mailslotConnect(char * name) {
 	return newFile;
 }
 
-int mailslotWrite(HANDLE mailSlot, void *msg, int msgSize) {
+int mailslotWrite(HANDLE mailSlot, planet_type *msg, int msgSize) {
 
 	/* Write a msg to a mailslot, return nr */
 	/* of successful bytes written         */

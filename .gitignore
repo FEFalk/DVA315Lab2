@@ -237,3 +237,4 @@ composer.lock
 composer.phar
 /chat-server
 *.mwb
+/server/Lab2Server.VC.opendb
