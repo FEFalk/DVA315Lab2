@@ -270,6 +270,7 @@ void planetThread(planet_type *planet)
 			
 
 		}
+		LeaveCriticalSection(&criticalSection);
 	}
 
 	

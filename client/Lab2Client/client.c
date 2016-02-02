@@ -108,17 +108,17 @@ void createPlanet(int threadsArrayIndex) {
 			buffer[bytesRead] = '\0';
 			if (strcmp(buffer, "Life") == 0)
 			{
-				printf("\nPlanet Life = 0\n");
+				printf("\nPlanet '%s' has died. Reason: Life = 0\n", planet->name);
 				break;
 			}
 			else if (strcmp(buffer, "OOBX") == 0)
 			{
-				printf("\nPlanet OOB: X\n");
+				printf("\nPlanet '%s' has died. Reason: OOB in X\n", planet->name);
 				break;
 			}
 			else
 			{
-				printf("\nPlanet OOB: Y\n");
+				printf("\nPlanet '%s' has died. Reason: OOB in Y\n", planet->name);
 				break;
 			}
 		}
