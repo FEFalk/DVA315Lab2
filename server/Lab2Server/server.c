@@ -119,21 +119,21 @@ DWORD WINAPI mailThread(LPVOID arg) {
 	static int posY = 0;
 	int flag = 0;
 	HANDLE mailbox;
-	/* create a mailslot that clients can use to pass requests through   */
-	/* (the clients use the name below to get contact with the mailslot) */
-	/* NOTE: The name of a mailslot must start with "\\\\.\\mailslot\\"  */
+							/* create a mailslot that clients can use to pass requests through   */
+							/* (the clients use the name below to get contact with the mailslot) */
+							/* NOTE: The name of a mailslot must start with "\\\\.\\mailslot\\"  */
 
-
-	mailbox = mailslotCreate("\\\\.\\mailslot\\mailbox");
+	
+	mailbox = mailslotCreate ("\\\\.\\mailslot\\mailbox");
 
 	InitializeCriticalSection(&criticalSection);
-	for (;;) {
-		/* (ordinary file manipulating functions are used to read from mailslots) */
-		/* in this example the server receives strings from the client side and   */
-		/* displays them in the presentation window                               */
-		/* NOTE: binary data can also be sent and received, e.g. planet structures*/
-
-		bytesRead = mailslotRead(mailbox, &buffer, strlen(buffer));
+	for(;;) {				
+							/* (ordinary file manipulating functions are used to read from mailslots) */
+							/* in this example the server receives strings from the client side and   */
+							/* displays them in the presentation window                               */
+							/* NOTE: binary data can also be sent and received, e.g. planet structures*/
+		
+		bytesRead = mailslotRead (mailbox, &buffer, strlen(buffer)); 
 		//TESTING PLANETS
 		//if(flag==0)
 		//{
@@ -164,24 +164,24 @@ DWORD WINAPI mailThread(LPVOID arg) {
 			p->next = NULL;
 			addPlanet(p);
 			threadCreate((LPTHREAD_START_ROUTINE)planetThread, p);
+			
+		
 
+							/* NOTE: It is appropriate to replace this code with something */
+							/*       that match your needs here.                           */
+		posY++;  
+							/* (hDC is used reference the previously created window) */	
+		TextOut(hDC, 10, 50+posY%200, p->name, sizeof(strlen(p->name)));
 
-
-			/* NOTE: It is appropriate to replace this code with something */
-			/*       that match your needs here.                           */
-			posY++;
-			/* (hDC is used reference the previously created window) */
-			TextOut(hDC, 10, 50 + posY % 200, p->name, sizeof(strlen(p->name)));
-
-
+		
 		}
 		else {
-			/* failed reading from mailslot                              */
-			/* (in this example we ignore this, and happily continue...) */
+								/* failed reading from mailslot                              */
+								/* (in this example we ignore this, and happily continue...) */
 		}
 	}
 	DeleteCriticalSection(&criticalSection);
-	return 0;
+  return 0;
 }
 
 /********************************************************************\
