@@ -12,6 +12,7 @@
 #include <windows.h>
 #include <string.h>
 #include "wrapper.h"
+#include "resource.h"
 
 #define MESSAGE "Hello!"
 #define MAX_THREADS 2
@@ -161,54 +162,108 @@ void deletePlanetThread(int index)
 	threads[index] = NULL;
 }
 
-void main(void) {
-	int loops = 2000;
-	BOOL planetmaking = TRUE;
-	char create=0;
-	semaphore = CreateSemaphore(NULL, 1, 10, NULL);
-	if (semaphore == NULL)
-	{
-		printf("CreateSemaphore Error: %d\n", GetLastError());
-		return 1;
-	}
-	InitializeCriticalSection(&criticalSection);
 
-	// I/O-loop for creating planets or quitting main-process.
-	while(planetmaking == TRUE)
-	{ 
-		WaitForSingleObject(semaphore, INFINITE);
-		while (1)
+INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	switch (uMsg)
+	{
+	case WM_COMMAND:
+		switch (LOWORD(wParam))
 		{
-			printf("Do you want to make a new planet? y/n\nEnter: \n");
-			create = getch();
-			if (create == 'y') {
-				//If adding the thread was successful, break and wait...
-				if (addThread())
-				{
-					break;
-				}
-				else {
-					printf("Too many threads active! Try again later.\n");
-				}
-			}
-			else if (create == 'n')
-			{
-				planetmaking = FALSE;
-				break;
-			}
-			else printf("Wrong input!\n");
+		case IDCANCEL:
+			SendMessage(hDlg, WM_CLOSE, 0, 0);
+			return TRUE;
+		}
+		break;
+
+	case WM_CLOSE:
+		if (MessageBox(hDlg,
+			TEXT("Close the window?"), TEXT("Close"),
+			MB_ICONQUESTION | MB_YESNO) == IDYES)
+		{
+			DestroyWindow(hDlg);
+		}
+		return TRUE;
+
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		return TRUE;
+	}
+	return FALSE;
+}
+
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
+	LPSTR lpCmdLine, int nCmdShow)
+{
+	HWND hDlg;
+	BOOL ret;
+	MSG msg;
+
+	hDlg = CreateDialogParam(hInstance, MAKEINTRESOURCE(IDD_DIALOG2), 0, DialogProc, 0);
+	ShowWindow(hDlg, nCmdShow);
+
+
+	while ((ret = GetMessage(&msg, 0, 0, 0)) != 0) {
+		if (ret == -1) /* error found */
+			return -1;
+
+		if (!IsDialogMessage(hDlg, &msg)) {
+			TranslateMessage(&msg); /* translate virtual-key messages */
+			DispatchMessage(&msg); /* send it to dialog procedure */
 		}
 	}
-
-	for (int i = 0; i < MAX_THREADS; i++)
-	{
-		if(threads[i]!=NULL)
-			CloseHandle(threads[i]);
-	}
-	
-	DeleteCriticalSection(&criticalSection);
-	printf("\nShutting down main-process...\n");
-	Sleep(5);
-
-	return 0;
 }
+
+
+
+//void main(void) {
+//	int loops = 2000;
+//	BOOL planetmaking = TRUE;
+//	char create=0;
+//	semaphore = CreateSemaphore(NULL, 1, 10, NULL);
+//	if (semaphore == NULL)
+//	{
+//		printf("CreateSemaphore Error: %d\n", GetLastError());
+//		return 1;
+//	}
+//	InitializeCriticalSection(&criticalSection);
+//
+//	// I/O-loop for creating planets or quitting main-process.
+//	while(planetmaking == TRUE)
+//	{ 
+//		WaitForSingleObject(semaphore, INFINITE);
+//		while (1)
+//		{
+//			printf("Do you want to make a new planet? y/n\nEnter: \n");
+//			create = getch();
+//			if (create == 'y') {
+//				//If adding the thread was successful, break and wait...
+//				if (addThread())
+//				{
+//					break;
+//				}
+//				else {
+//					printf("Too many threads active! Try again later.\n");
+//				}
+//			}
+//			else if (create == 'n')
+//			{
+//				planetmaking = FALSE;
+//				break;
+//			}
+//			else printf("Wrong input!\n");
+//		}
+//	}
+//
+//	for (int i = 0; i < MAX_THREADS; i++)
+//	{
+//		if(threads[i]!=NULL)
+//			CloseHandle(threads[i]);
+//	}
+//	
+//	DeleteCriticalSection(&criticalSection);
+//	printf("\nShutting down main-process...\n");
+//	Sleep(5);
+//
+//	return 0;
+//}

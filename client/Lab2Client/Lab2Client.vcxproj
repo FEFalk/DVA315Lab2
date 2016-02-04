@@ -91,7 +91,7 @@
       <SDLCheck>true</SDLCheck>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
@@ -150,7 +150,11 @@
     <ClCompile Include="wrapper.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="resource.h" />
     <ClInclude Include="wrapper.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Lab2Client.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
