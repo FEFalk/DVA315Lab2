@@ -16,6 +16,7 @@
 
 #define MESSAGE "Hello!"
 #define MAX_THREADS 2
+#define UWM_CHANGENAME (WM_APP + 1000)
 HANDLE semaphore;
 CRITICAL_SECTION criticalSection;
 HANDLE threads[MAX_THREADS];
@@ -162,7 +163,90 @@ void deletePlanetThread(int index)
 	threads[index] = NULL;
 }
 
+/*HERE STARTS THE LAB 3 CODE!!!!!!!!!!!!!!!!!!!!!!!*/
 
+planet_type LocalPlanets[] = {
+	{TEXT("Venus"), 300, 300, 0.01, 0.001, 1000, 2000},
+	{ TEXT("Jupiter"), 300, 300, 0.01, 0.001, 1000, 2000 },
+	{ TEXT("Neptunus"), 300, 300, 0.01, 0.001, 1000, 2000 }
+};
+
+INT_PTR CALLBACK ListBoxExampleProc(HWND hDlg, UINT message,
+	WPARAM wParam, LPARAM lParam)
+{
+	switch (message)
+	{
+	case WM_INITDIALOG:
+	{
+		// Add items to list. 
+		HWND hwndList = GetDlgItem(hDlg, IDC_LIST2);
+		for (int i = 0; i < ARRAYSIZE(LocalPlanets); i++)
+		{
+			int pos = (int)SendMessage(hwndList, LB_ADDSTRING, 0,
+				(LPARAM)LocalPlanets[i].name);
+			// Set the array index of the player as item data.
+			// This enables us to retrieve the item from the array
+			// even after the items are sorted by the list box.
+			SendMessage(hwndList, LB_SETITEMDATA, pos, (LPARAM)i);
+		}
+		// Set input focus to the list box.
+		SetFocus(hwndList);
+		return TRUE;
+	}
+
+	case WM_COMMAND:
+		switch (LOWORD(wParam))
+		{
+		case IDOK:
+		case IDCANCEL:
+			EndDialog(hDlg, LOWORD(wParam));
+			return TRUE;
+
+		case IDC_LIST2:
+		{
+			switch (HIWORD(wParam))
+			{
+			case LBN_SELCHANGE:
+			{
+				HWND hwndList = GetDlgItem(hDlg, IDC_LIST2);
+
+				// Get selected index.
+				int lbItem = (int)SendMessage(hwndList, LB_GETCURSEL, 0, 0);
+
+				// Get item data.
+				int i = (int)SendMessage(hwndList, LB_GETITEMDATA, lbItem, 0);
+
+				return TRUE;
+			}
+			}
+		}
+		return TRUE;
+		}
+	}
+	return FALSE;
+}
+
+void onButtonClick(HWND hDlg) {
+	char buffer[128];
+	int msg = 1;
+	sprintf(buffer, "I am MessageBox");
+	MessageBox(hDlg, buffer, "Note", MB_OK);
+	ListBoxExampleProc(hDlg, WM_INITDIALOG,
+		IDC_LIST2, NULL);
+	//SetWindowText(hDlg, TEXT("TESTING SETWINDOWTEXT")); /*Edits the name of the dialog window ( which is hDlg )*/
+	//SendMessage(IDC_LIST2, msg, buffer, NULL); /*Queues a message in IDC_LIST2s messagebox*/
+}
+void onCancel(HWND hDlg) {
+	SendMessage(hDlg, WM_CLOSE, 0, 0);
+}
+void onClose(HWND hDlg) {
+	if (MessageBox(hDlg,
+		TEXT("Close the window?"), TEXT("Close"),
+		MB_ICONQUESTION | MB_YESNO) == IDYES)
+	{
+		DestroyWindow(hDlg);
+	}
+}
 INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg)
@@ -170,25 +254,15 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_COMMAND:
 		switch (LOWORD(wParam))
 		{
-		case IDCANCEL:
-			SendMessage(hDlg, WM_CLOSE, 0, 0);
-			return TRUE;
+		case IDCANCEL:	onCancel(hDlg);	return TRUE;
+		case IDC_BUTTON3:	onButtonClick(hDlg);	return TRUE;
 		}
 		break;
 
-	case WM_CLOSE:
-		if (MessageBox(hDlg,
-			TEXT("Close the window?"), TEXT("Close"),
-			MB_ICONQUESTION | MB_YESNO) == IDYES)
-		{
-			DestroyWindow(hDlg);
-		}
-		return TRUE;
+	case WM_CLOSE:	onClose(hDlg);	return TRUE;
 
-	case WM_DESTROY:
-		PostQuitMessage(0);
-		return TRUE;
-	}
+	case WM_DESTROY:	PostQuitMessage(0);	return TRUE;
+	}  
 	return FALSE;
 }
 
