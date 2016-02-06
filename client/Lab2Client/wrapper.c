@@ -2,6 +2,7 @@
 #include <windows.h>
 #include <string.h>
 #include "wrapper.h"
+#include "resource.h"
 
 #define TIMERID			100  /* id for timer that is used by the thread that manages the window where graphics is drawn */
 #define DEFAULT_STACK_SIZE	1024
@@ -212,6 +213,80 @@ void windowRefreshTimer(HWND hWnd, int updateFreq) {
 /*****  Lab 3: Check in MSDN GetOpenFileName and GetSaveFileName  *********/
 /**************  what the parameters mean, and what you must call this function with *********/
 
+BOOL checkFields(HWND hDlg)
+{
+	planet_type *planet = (planet_type*)calloc(1, sizeof(planet_type));
+	planet->next = NULL;
+	HWND localPlanetsList = GetDlgItem(GetParent(hDlg), ID_LIST_LOCAL_PLANETS);
+	char *p;
+	int i, bufInt = 0;
+	char* buf;
+	int editBoxArray[7] =
+	{
+		ID_EDIT_PLANET_NAME,
+		ID_EDIT_PLANET_X_P,
+		ID_EDIT_PLANET_Y_P,
+		ID_EDIT_PLANET_X_V,
+		ID_EDIT_PLANET_Y_V,
+		ID_EDIT_PLANET_MASS,
+		ID_EDIT_PLANET_LIFE
+	};
+	int len;
+	for (int i = 0; i < 7; i++)
+	{
+		len = GetWindowTextLength(GetDlgItem(hDlg, editBoxArray[i]));
+		if (len > 0)
+		{
+			buf = (char*)GlobalAlloc(GPTR, len + 1);
+			GetDlgItemText(hDlg, editBoxArray[i], buf, len + 1);
+
+			switch (editBoxArray[i])
+			{
+			case ID_EDIT_PLANET_NAME:
+			{
+				if (strlen(buf) > 20)MessageBox(hDlg, TEXT("Error too big!\n"), TEXT("Error!"), MB_OK);
+				else
+				{
+					sprintf(planet->name, buf);
+					if ((p = strchr(planet->name, '\n')) != NULL)
+						*p = '\0';
+				}
+			}
+			break;
+			case ID_EDIT_PLANET_X_P:
+				planet->sx = atoi(buf);
+				break;
+			case ID_EDIT_PLANET_Y_P:
+				planet->sy = atoi(buf);
+				break;
+			case ID_EDIT_PLANET_X_V:
+				planet->vx = atoi(buf);
+				break;
+			case ID_EDIT_PLANET_Y_V:
+				planet->vy = atoi(buf);
+				break;
+			case ID_EDIT_PLANET_MASS:
+				planet->mass = atoi(buf);
+				break;
+			case ID_EDIT_PLANET_LIFE:
+				planet->life = atoi(buf);
+				break;
+			default:
+				break;
+			}
+		}
+		else
+		{
+			//error
+			MessageBox(hDlg, TEXT("The field %d is empty!", editBoxArray[i]), "Warning!",
+				MB_OK | MB_ICONINFORMATION);
+			return FALSE;
+		}
+	}
+	GlobalFree((HANDLE)buf);
+	addPlanet(planet);
+	return TRUE;
+}
 
 HANDLE OpenFileDialog(char* string, DWORD accessMode, DWORD howToCreate)
 {

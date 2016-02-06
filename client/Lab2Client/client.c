@@ -13,6 +13,7 @@
 #include <string.h>
 #include "wrapper.h"
 #include "resource.h"
+#include "Strsafe.h"
 
 #define MESSAGE "Hello!"
 #define MAX_THREADS 2
@@ -21,7 +22,7 @@ CRITICAL_SECTION criticalSection;
 HANDLE threads[MAX_THREADS];
 int counter = 0;
 void deletePlanetThread(int index);
-
+planet_type *localDatabase=NULL;
 /****************************************************************
 * Function: createPlanet  										*
 * Purpose: Creates a new planet through I/O and sends it to		*
@@ -162,20 +163,227 @@ void deletePlanetThread(int index)
 	threads[index] = NULL;
 }
 
+/********************************************************************\
+* Function: addPlanet												 *
+* Purpose: Adds new planet to the database linked list               *
+* @param newPlanet - The new planet to be added				         *
+/********************************************************************/
+int getPlanetIndex(planet_type *p)
+{
+	planet_type *traverser = localDatabase;
+	int i;
+	if (traverser != 0)
+	{
+		for (i = 0; traverser->next == p; i++)
+		{
+			traverser = traverser->next;
+		}
+	}
 
-INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+	return i;
+
+}
+
+/********************************************************************\
+* Function: getPlanet												 *
+* Purpose: Returns a planet from the database linked list            *
+* @param newPlanet - The new planet to be added				         *
+/********************************************************************/
+planet_type *getPlanetAt(int index)
+{
+	planet_type *traverser = localDatabase;
+	if (traverser != 0)
+	{
+		while (traverser->next != 0)
+		{
+			traverser = traverser->next;
+		}
+	}
+
+	return traverser;
+}
+/********************************************************************\
+* Function: getPlanet												 *
+* Purpose: Returns a planet from the database linked list            *
+* @param newPlanet - The new planet to be added				         *
+/********************************************************************/
+planet_type *getLastPlanet()
+{
+	planet_type *traverser = localDatabase;
+	if (traverser != 0)
+	{
+		while (traverser->next != 0)
+		{
+			traverser = traverser->next;
+		}
+	}
+
+	return traverser;
+}
+
+/********************************************************************\
+* Function: addPlanet												 *
+* Purpose: Adds new planet to the database linked list               *
+* @param newPlanet - The new planet to be added				         *
+/********************************************************************/
+void addPlanet(planet_type *newPlanet)
+{
+	planet_type *traverser = localDatabase;
+	if (traverser != 0)
+	{
+		while (traverser->next != 0)
+		{
+			traverser = traverser->next;
+		}
+		traverser->next = newPlanet;
+	}
+	else
+	{
+		localDatabase = newPlanet;
+	}
+
+
+}
+/********************************************************************\
+* Function: deletePlanet											 *
+* Purpose: Deletes a planet from the database linked list            *
+* @param planetToRemove - The planet to be removed					 *
+/********************************************************************/
+void deletePlanet(planet_type *planetToRemove, char *deleteMessage)
+{
+	planet_type *prev = localDatabase;
+
+	EnterCriticalSection(&criticalSection);
+
+	planet_type *traverser = localDatabase;
+	while (traverser != planetToRemove)
+	{
+		prev = traverser;
+		traverser = traverser->next;
+	}
+	prev->next = planetToRemove->next;
+	//If the planet to remove is the root-planet
+	if (traverser == localDatabase)
+		localDatabase = traverser->next;
+	traverser->next = NULL;
+
+	//!UPDATE GETITEMDATA/SETITEMDATA!
+
+
+	free(traverser);
+	LeaveCriticalSection(&criticalSection);
+}
+
+HWND addPlanetDialog = NULL;
+INT_PTR CALLBACK addPlanetProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg)
 	{
+	case WM_INITDIALOG:
+		{
+			return TRUE;
+		}
 	case WM_COMMAND:
+	{
 		switch (LOWORD(wParam))
 		{
 		case IDCANCEL:
 			SendMessage(hDlg, WM_CLOSE, 0, 0);
 			return TRUE;
-		}
-		break;
+		case IDOK:
+			{
+				HWND localPlanetsList = GetDlgItem(GetParent(hDlg), ID_LIST_LOCAL_PLANETS);
+				if (checkFields(hDlg))
+				{
+					int pos = (int)SendMessage(localPlanetsList, LB_ADDSTRING, 0, (LPARAM)getLastPlanet()->name);
+					SendMessage(localPlanetsList, LB_SETITEMDATA, pos, getPlanetIndex(getLastPlanet()));
+					ShowWindow(hDlg, SW_HIDE);
+				}
+				else
+				{
+					//Do something when a field is empty
+				}
 
+				return TRUE;
+			}
+		}
+		return TRUE;
+	}
+	case WM_CLOSE:
+		if (MessageBox(hDlg,
+			TEXT("Close the window?"), TEXT("Close"),
+			MB_ICONQUESTION | MB_YESNO) == IDYES)
+		{
+			ShowWindow(hDlg, SW_HIDE);
+		}
+		return TRUE;
+
+	case WM_DESTROY:
+		return TRUE;
+	}
+	return FALSE;
+}
+
+INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	switch (uMsg)
+	{
+	case WM_INITDIALOG:
+		{
+			//Initializes the "Add Planet"-window(dialog)
+			addPlanetDialog = CreateDialog(GetModuleHandle(NULL), MAKEINTRESOURCE(ID_DIALOG_ADD_PLANET), hDlg, addPlanetProc);
+			if(addPlanetDialog == NULL)
+			{
+				MessageBox(hDlg, "CreateDialog returned NULL", "Warning!",
+					MB_OK | MB_ICONINFORMATION);
+			}
+			return TRUE;
+		}
+	case WM_COMMAND:
+		{
+			switch (LOWORD(wParam))
+			{
+			case IDCANCEL:
+				SendMessage(hDlg, WM_CLOSE, 0, 0);
+				return TRUE;
+			case ID_BUTTON_ADD:
+				{
+					ShowWindow(addPlanetDialog, SW_SHOW);
+					return TRUE;
+				}
+			}
+
+			case ID_LIST_LOCAL_PLANETS:
+				{
+					switch (HIWORD(wParam))
+					{
+					case LBN_SELCHANGE:
+						{
+							HWND localPlanetsList = GetDlgItem(hDlg, ID_LIST_LOCAL_PLANETS);
+
+							// Get selected index. (In ListBox)
+							int lbItem = (int)SendMessage(localPlanetsList, LB_GETCURSEL, 0, 0);
+
+							// Get item data of selected index. (item data = Index of planet linked list)
+							int i = (int)SendMessage(localPlanetsList, LB_GETITEMDATA, lbItem, 0);
+
+							// Do something with the data from Roster[i]
+							TCHAR buff[MAX_PATH];
+							StringCbPrintf(buff, ARRAYSIZE(buff),
+								TEXT("Planet Name: %s\Planet X-Position: %d\Planet Y-Position: %d"),
+								localDatabase[i].name, (int)localDatabase[i].sx,
+								(int)localDatabase[i].sy);
+
+							SetDlgItemText(hDlg, ID_STATIC_LOCAL_PLANET_INFO, buff);
+
+							return TRUE;
+						}
+					}
+
+					return TRUE;
+				}
+			return TRUE;
+		}
 	case WM_CLOSE:
 		if (MessageBox(hDlg,
 			TEXT("Close the window?"), TEXT("Close"),
@@ -199,15 +407,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	BOOL ret;
 	MSG msg;
 
-	hDlg = CreateDialogParam(hInstance, MAKEINTRESOURCE(IDD_DIALOG2), 0, DialogProc, 0);
+	hDlg = CreateDialogParam(hInstance, MAKEINTRESOURCE(ID_DIALOG_MAIN), 0, DialogProc, 0);
 	ShowWindow(hDlg, nCmdShow);
 
 
 	while ((ret = GetMessage(&msg, 0, 0, 0)) != 0) {
 		if (ret == -1) /* error found */
 			return -1;
-
-		if (!IsDialogMessage(hDlg, &msg)) {
+		if (!IsDialogMessage(addPlanetDialog, &msg)) 
+		{
 			TranslateMessage(&msg); /* translate virtual-key messages */
 			DispatchMessage(&msg); /* send it to dialog procedure */
 		}
