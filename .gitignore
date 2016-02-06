@@ -237,3 +237,7 @@ composer.lock
 composer.phar
 /chat-server
 *.mwb
+/client/Lab2Client.VC.opendb
+/client/Lab2Client/Lab2Client.rc
+/client/Lab2Client/resource.h
+/client/Lab2Client/Test.c
