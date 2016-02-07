@@ -283,6 +283,7 @@ BOOL checkFields(HWND hDlg)
 			return FALSE;
 		}
 	}
+	planet->next = NULL;
 	GlobalFree((HANDLE)buf);
 	addPlanet(planet);
 	return TRUE;

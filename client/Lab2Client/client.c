@@ -15,14 +15,13 @@
 #include "resource.h"
 #include "Strsafe.h"
 
-#define MESSAGE "Hello!"
-#define MAX_THREADS 2
+planet_type *getPlanetWithPID(char pid[30]);
 HANDLE semaphore;
 CRITICAL_SECTION criticalSection;
-HANDLE threads[MAX_THREADS];
 int counter = 0;
 void deletePlanetThread(int index);
 planet_type *localDatabase=NULL;
+HWND hDlgMain;
 /****************************************************************
 * Function: createPlanet  										*
 * Purpose: Creates a new planet through I/O and sends it to		*
@@ -31,17 +30,16 @@ planet_type *localDatabase=NULL;
 *					handle-array(used to know which element		*
 *					to delete).									*
 *****************************************************************/
-void createPlanet(int threadsArrayIndex) {
-	HANDLE mailSlot;
-	DWORD bytesWritten = 0;
+void planetThread(int serverListIndex) {
 	DWORD threadId = GetCurrentThreadId();
-	planet_type *planet = (planet_type*)calloc(1, sizeof(planet_type));
+	HWND serverPlanetsList = GetDlgItem(hDlgMain, ID_LIST_SERVER_PLANETS);
+	HWND serverMessagesList = GetDlgItem(hDlgMain, ID_LIST_SERVER_MESSAGES);
 	BOOL loop = TRUE;
 	DWORD bytesRead;
 	char buffer[1024];
 	HANDLE mailbox;
 	int c;
-	char *p;
+	char *serverMessage = (char *)calloc(20, sizeof(char));
 	/* create a mailslot that clients can use to pass requests through   */
 	/* (the clients use the name below to get contact with the mailslot) */
 	/* NOTE: The name of a mailslot must start with "\\\\.\\mailslot\\"  */
@@ -50,118 +48,103 @@ void createPlanet(int threadsArrayIndex) {
 	char mailslotName[128];
 	sprintf(mailslotName, "\\\\.\\mailslot\\%d", threadId);
 	mailbox = mailslotCreate(mailslotName);
+
 	
-	//Connect to the server mailbox
-	mailSlot = mailslotConnect("\\\\.\\mailslot\\mailbox");
-	
-	if (mailSlot == INVALID_HANDLE_VALUE) {
-		printf("Failed to get a handle to the mailslot!!\nHave you started the server?\n");
-		return;
-	}
-	else {
-		printf("Successfully got the mailslot\n");
-	}
-	//I/O for creating a new planet
-	EnterCriticalSection(&criticalSection);
-	printf("Planet Name: ");
-	fgets(planet->name, 20, (stdin));
-	if ((p = strchr(planet->name, '\n')) != NULL)
-		*p = '\0';
-	if (strlen(planet->name) > 20)printf("Error too big!\n");
-	else 
-	{
-		sprintf(planet->pid, "%d", threadId);
-		printf("Position X: ");
-		scanf(" %lf", &planet->sx);
-		printf("Position Y: ");
-		scanf(" %lf", &planet->sy);
-		printf("Velocity X: ");
-		scanf(" %lf", &planet->vx);
-		printf("Velocity Y: ");
-		scanf(" %lf", &planet->vy);
-		printf("Mass: ");
-		scanf(" %lf", &planet->mass);
-		printf("Life: ");
-		scanf(" %d", &planet->life);
-		loop = FALSE;
-		while ((c = getchar()) != '\n' && c != EOF);
-	}
-	LeaveCriticalSection(&criticalSection);
-
-	//Sends the planet to server through the mailslot
-	bytesWritten = mailslotWrite(mailSlot, planet, sizeof(*planet));
-	if (bytesWritten != -1)
-		printf("data sent to server (bytes = %d)\n", bytesWritten);
-
-	else
-		printf("failed sending data to server\n");
-
-	//Gives main-thread permission to continue
-	ReleaseSemaphore(semaphore, 1, NULL);
-
 	//READ-LOOP
 	for (;;) {
 
 		bytesRead = mailslotRead(mailbox, &buffer, strlen(buffer));
 
 
-		//If a message is recieved, print out the reason why the planet died.
+		//If a message is recieved, print out the reason why the planet died. 
+		//! TO BE FIXED !
 		if (bytesRead != 0) {
 			buffer[bytesRead] = '\0';
+			
+			planet_type *planet = getPlanetWithPID(threadId);
 			if (strcmp(buffer, "Life") == 0)
 			{
-				printf("\nPlanet '%s' has died. Reason: Life = 0\n", planet->name);
+				sprintf(serverMessage, "Planet '%s' has died.Reason: Life = 0", planet->name);
+				SendMessage(serverMessagesList, LB_ADDSTRING, 0, (LPARAM)serverMessage);
+				SendMessage(serverPlanetsList, LB_DELETESTRING, serverListIndex, NULL);
+				/*printf("\nPlanet '%s' has died. Reason: Life = 0\n", planet->name);*/
 				break;
 			}
 			else if (strcmp(buffer, "OOBX") == 0)
 			{
-				printf("\nPlanet '%s' has died. Reason: OOB in X\n", planet->name);
+				SendMessage(serverMessagesList, LB_ADDSTRING, 0, (LPARAM)TEXT("Planet '%s' has died. Reason: OOB in X", p));
+				SendMessage(serverPlanetsList, LB_DELETESTRING, serverListIndex, NULL);
+				/*printf("\nPlanet '%s' has died. Reason: OOB in X\n", planet->name);*/
 				break;
 			}
 			else
 			{
-				printf("\nPlanet '%s' has died. Reason: OOB in Y\n", planet->name);
+				SendMessage(serverMessagesList, LB_ADDSTRING, 0, (LPARAM)TEXT("Planet '%s' has died. Reason: OOB in Y", p));
+				SendMessage(serverPlanetsList, LB_DELETESTRING, serverListIndex, NULL);
+				/*printf("\nPlanet '%s' has died. Reason: OOB in Y\n", planet->name);*/
+
 				break;
 			}
+			
 		}
 	}
-	free(planet);
-	deletePlanetThread(threadsArrayIndex);
-	mailslotClose(mailSlot);
+
 	mailslotClose(mailbox);
-
 }
 
+///********************************************************************\
+//* Function: addThread											     *
+//* Purpose: Adds a thread to the thread-handles array.                *
+//* @return - Returns TRUE or FALSE depending on if the array had an	 *
+//*			open spot or not.										 *
+///********************************************************************/
+//BOOL addThread()
+//{
+//	for (int i = 0; i < MAX_THREADS; i++)
+//	{
+//		//If spot in array is open, create thread there
+//		if (threads[i]==NULL)
+//		{
+//			threads[i] = threadCreate((LPTHREAD_START_ROUTINE)createPlanet, i);
+//			return TRUE;
+//		}
+//	}
+//	return FALSE;
+//}
+//
+///********************************************************************\
+//* Function: deleteThread											 *
+//* Purpose: Deletes a thread-handle from the array and closes it.     *
+//* @param index - Index of the thread to delete.						 *
+///********************************************************************/
+//void deletePlanetThread(int index)
+//{
+//	CloseHandle(threads[index]);
+//	threads[index] = NULL;
+//}
+
 /********************************************************************\
-* Function: addThread											     *
-* Purpose: Adds a thread to the thread-handles array.                *
-* @return - Returns TRUE or FALSE depending on if the array had an	 *
-*			open spot or not.										 *
+* Function: addPlanet												 *
+* Purpose: Adds new planet to the database linked list               *
+* @param newPlanet - The new planet to be added				         *
 /********************************************************************/
-BOOL addThread()
+planet_type *getPlanetWithPID(DWORD pid)
 {
-	for (int i = 0; i < MAX_THREADS; i++)
+	char *threadIDString = calloc(20, sizeof(char));
+	_itoa(pid, threadIDString, 10);
+	planet_type *traverser = localDatabase;
+	if (traverser != 0)
 	{
-		//If spot in array is open, create thread there
-		if (threads[i]==NULL)
+		while(strncmp(traverser->pid, threadIDString, strlen(threadIDString))!=0)
 		{
-			threads[i] = threadCreate((LPTHREAD_START_ROUTINE)createPlanet, i);
-			return TRUE;
+			traverser = traverser->next;
 		}
 	}
-	return FALSE;
+
+	return traverser;
+
 }
 
-/********************************************************************\
-* Function: deleteThread											 *
-* Purpose: Deletes a thread-handle from the array and closes it.     *
-* @param index - Index of the thread to delete.						 *
-/********************************************************************/
-void deletePlanetThread(int index)
-{
-	CloseHandle(threads[index]);
-	threads[index] = NULL;
-}
 
 /********************************************************************\
 * Function: addPlanet												 *
@@ -324,6 +307,7 @@ INT_PTR CALLBACK addPlanetProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPara
 	return FALSE;
 }
 
+HANDLE mailSlot;
 INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg)
@@ -337,6 +321,15 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				MessageBox(hDlg, "CreateDialog returned NULL", "Warning!",
 					MB_OK | MB_ICONINFORMATION);
 			}
+
+			//Connect to the server mailbox
+			mailSlot = mailslotConnect("\\\\.\\mailslot\\mailbox");
+			if (mailSlot == NULL) {
+				MessageBox(hDlg, "Failed to get a handle to the mailslot!!\nHave you started the server?", "Warning!",
+					MB_OK | MB_ICONINFORMATION);
+				PostQuitMessage(0);
+			}
+
 			return TRUE;
 		}
 	case WM_COMMAND:
@@ -351,8 +344,46 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					ShowWindow(addPlanetDialog, SW_SHOW);
 					return TRUE;
 				}
-			}
+			case ID_BUTTON_SEND:
+				{
+					HWND localPlanetsList = GetDlgItem(hDlg, ID_LIST_LOCAL_PLANETS);
+					HWND serverPlanetsList = GetDlgItem(hDlg, ID_LIST_SERVER_PLANETS);
 
+					// Get selected index. (In ListBox)
+					int lbItem = SendMessage(localPlanetsList, LB_GETCURSEL, 0, 0);
+					if(lbItem == LB_ERR)
+					{
+						MessageBox(hDlg, TEXT("No planet is selected! Please select a planet to send first.", bytesWritten), "Error!", MB_OK | MB_ICONINFORMATION);
+						return TRUE;
+					}
+
+
+					int pos = (int)SendMessage(serverPlanetsList, LB_ADDSTRING, 0, (LPARAM)(localDatabase + lbItem)->name);
+					HANDLE thread;
+					thread = threadCreate((LPTHREAD_START_ROUTINE)planetThread, pos);
+					
+					char *temp = calloc(20, sizeof(char));
+					_itoa(GetThreadId(thread), temp, 10);
+					strncpy((localDatabase + lbItem)->pid, temp, strlen(temp)+1);
+					DWORD bytesWritten = 0;
+					//Sends the planet to server through the mailslot
+					bytesWritten = mailslotWrite(mailSlot, localDatabase+lbItem, sizeof(*localDatabase));
+					if (bytesWritten != -1)
+					{
+						MessageBox(hDlg, TEXT("Data sent to server (bytes = %d)", bytesWritten), "Success!", MB_OK | MB_ICONINFORMATION);
+						
+
+						
+					}
+					else
+					{
+						CloseHandle(thread);
+						SendMessage(serverPlanetsList, LB_DELETESTRING, pos, NULL);
+						MessageBox(hDlg, TEXT("Failed to send data to server!", bytesWritten), "Error!", MB_OK | MB_ICONINFORMATION);
+						return TRUE;
+					}
+					return TRUE;
+				}
 			case ID_LIST_LOCAL_PLANETS:
 				{
 					switch (HIWORD(wParam))
@@ -379,10 +410,12 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 							return TRUE;
 						}
 					}
-
-					return TRUE;
+				return TRUE;
 				}
-			return TRUE;
+			}
+
+
+			return FALSE;
 		}
 	case WM_CLOSE:
 		if (MessageBox(hDlg,
@@ -394,21 +427,23 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		return TRUE;
 
 	case WM_DESTROY:
+		mailslotClose(mailSlot);
 		PostQuitMessage(0);
 		return TRUE;
 	}
 	return FALSE;
 }
 
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	LPSTR lpCmdLine, int nCmdShow)
 {
-	HWND hDlg;
+	
 	BOOL ret;
 	MSG msg;
 
-	hDlg = CreateDialogParam(hInstance, MAKEINTRESOURCE(ID_DIALOG_MAIN), 0, DialogProc, 0);
-	ShowWindow(hDlg, nCmdShow);
+	hDlgMain = CreateDialogParam(hInstance, MAKEINTRESOURCE(ID_DIALOG_MAIN), 0, DialogProc, 0);
+	ShowWindow(hDlgMain, nCmdShow);
 
 
 	while ((ret = GetMessage(&msg, 0, 0, 0)) != 0) {
