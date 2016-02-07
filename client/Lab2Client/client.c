@@ -61,10 +61,13 @@ void planetThread(int serverListIndex) {
 		if (bytesRead != 0) {
 			buffer[bytesRead] = '\0';
 			
+			SYSTEMTIME st;
+			GetLocalTime(&st);
+			
 			planet_type *planet = getPlanetWithPID(threadId);
 			if (strcmp(buffer, "Life") == 0)
 			{
-				sprintf(serverMessage, "Planet '%s' has died.Reason: Life = 0", planet->name);
+				sprintf(serverMessage, "[%d:%d:%d] Planet '%s' has died. Reason: Life = 0", st.wHour, st.wMinute, st.wSecond, planet->name);
 				SendMessage(serverMessagesList, LB_ADDSTRING, 0, (LPARAM)serverMessage);
 				SendMessage(serverPlanetsList, LB_DELETESTRING, serverListIndex, NULL);
 				/*printf("\nPlanet '%s' has died. Reason: Life = 0\n", planet->name);*/
@@ -123,11 +126,21 @@ void planetThread(int serverListIndex) {
 //	threads[index] = NULL;
 //}
 
-/********************************************************************\
-* Function: addPlanet												 *
-* Purpose: Adds new planet to the database linked list               *
-* @param newPlanet - The new planet to be added				         *
-/********************************************************************/
+int *getDatabaseSize()
+{
+	planet_type *traverser = localDatabase;
+	int i;
+	if (traverser != 0)
+	{
+		for (i = 0; traverser->next != 0; i++)
+		{
+			traverser = traverser->next;
+		}
+	}
+
+	return i;
+
+}
 planet_type *getPlanetWithPID(DWORD pid)
 {
 	char *threadIDString = calloc(20, sizeof(char));
@@ -144,13 +157,6 @@ planet_type *getPlanetWithPID(DWORD pid)
 	return traverser;
 
 }
-
-
-/********************************************************************\
-* Function: addPlanet												 *
-* Purpose: Adds new planet to the database linked list               *
-* @param newPlanet - The new planet to be added				         *
-/********************************************************************/
 int getPlanetIndex(planet_type *p)
 {
 	planet_type *traverser = localDatabase;
@@ -166,18 +172,12 @@ int getPlanetIndex(planet_type *p)
 	return i;
 
 }
-
-/********************************************************************\
-* Function: getPlanet												 *
-* Purpose: Returns a planet from the database linked list            *
-* @param newPlanet - The new planet to be added				         *
-/********************************************************************/
 planet_type *getPlanetAt(int index)
 {
 	planet_type *traverser = localDatabase;
 	if (traverser != 0)
 	{
-		while (traverser->next != 0)
+		for (int i = 0; i < index; i++)
 		{
 			traverser = traverser->next;
 		}
@@ -185,11 +185,6 @@ planet_type *getPlanetAt(int index)
 
 	return traverser;
 }
-/********************************************************************\
-* Function: getPlanet												 *
-* Purpose: Returns a planet from the database linked list            *
-* @param newPlanet - The new planet to be added				         *
-/********************************************************************/
 planet_type *getLastPlanet()
 {
 	planet_type *traverser = localDatabase;
@@ -250,7 +245,6 @@ void deletePlanet(planet_type *planetToRemove, char *deleteMessage)
 		localDatabase = traverser->next;
 	traverser->next = NULL;
 
-	//!UPDATE GETITEMDATA/SETITEMDATA!
 
 
 	free(traverser);
@@ -314,6 +308,7 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 	case WM_INITDIALOG:
 		{
+			
 			//Initializes the "Add Planet"-window(dialog)
 			addPlanetDialog = CreateDialog(GetModuleHandle(NULL), MAKEINTRESOURCE(ID_DIALOG_ADD_PLANET), hDlg, addPlanetProc);
 			if(addPlanetDialog == NULL)
@@ -344,6 +339,23 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					ShowWindow(addPlanetDialog, SW_SHOW);
 					return TRUE;
 				}
+			case ID_FILE_LOAD:
+				{
+					loadPlanets(hDlg);
+
+					return TRUE;
+				}
+			case ID_FILE_SAVE:
+				{
+					//SAVE FILE
+
+					return TRUE;
+				}
+			case ID_FILE_EXIT:
+				{
+					SendMessage(hDlg, WM_CLOSE, 0, 0);
+					return TRUE;
+				}
 			case ID_BUTTON_SEND:
 				{
 					HWND localPlanetsList = GetDlgItem(hDlg, ID_LIST_LOCAL_PLANETS);
@@ -357,23 +369,23 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 						return TRUE;
 					}
 
+					planet_type *selectedPlanet = getPlanetAt(lbItem);
 
-					int pos = (int)SendMessage(serverPlanetsList, LB_ADDSTRING, 0, (LPARAM)(localDatabase + lbItem)->name);
+					int pos = (int)SendMessage(serverPlanetsList, LB_ADDSTRING, 0, (LPARAM)selectedPlanet->name);
 					HANDLE thread;
 					thread = threadCreate((LPTHREAD_START_ROUTINE)planetThread, pos);
 					
 					char *temp = calloc(20, sizeof(char));
 					_itoa(GetThreadId(thread), temp, 10);
-					strncpy((localDatabase + lbItem)->pid, temp, strlen(temp)+1);
+					strncpy(selectedPlanet->pid, temp, strlen(temp)+1);
 					DWORD bytesWritten = 0;
 					//Sends the planet to server through the mailslot
-					bytesWritten = mailslotWrite(mailSlot, localDatabase+lbItem, sizeof(*localDatabase));
+					bytesWritten = mailslotWrite(mailSlot, selectedPlanet, sizeof(*localDatabase));
 					if (bytesWritten != -1)
 					{
-						MessageBox(hDlg, TEXT("Data sent to server (bytes = %d)", bytesWritten), "Success!", MB_OK | MB_ICONINFORMATION);
-						
-
-						
+						char msg[100];
+						sprintf(msg, "Data sent to server (bytes = %d)", bytesWritten);
+						MessageBox(hDlg, TEXT(msg), "Success!", MB_OK | MB_ICONINFORMATION);
 					}
 					else
 					{
@@ -395,15 +407,13 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 							// Get selected index. (In ListBox)
 							int lbItem = (int)SendMessage(localPlanetsList, LB_GETCURSEL, 0, 0);
 
-							// Get item data of selected index. (item data = Index of planet linked list)
-							int i = (int)SendMessage(localPlanetsList, LB_GETITEMDATA, lbItem, 0);
-
+							planet_type *selectedPlanet = getPlanetAt(lbItem);
 							// Do something with the data from Roster[i]
 							TCHAR buff[MAX_PATH];
 							StringCbPrintf(buff, ARRAYSIZE(buff),
 								TEXT("Planet Name: %s\Planet X-Position: %d\Planet Y-Position: %d"),
-								localDatabase[i].name, (int)localDatabase[i].sx,
-								(int)localDatabase[i].sy);
+								selectedPlanet->name, (int)selectedPlanet->sx,
+								(int)selectedPlanet->sy);
 
 							SetDlgItemText(hDlg, ID_STATIC_LOCAL_PLANET_INFO, buff);
 
@@ -441,10 +451,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	
 	BOOL ret;
 	MSG msg;
+	HMENU hMenu;
 
 	hDlgMain = CreateDialogParam(hInstance, MAKEINTRESOURCE(ID_DIALOG_MAIN), 0, DialogProc, 0);
 	ShowWindow(hDlgMain, nCmdShow);
 
+	hMenu = LoadMenu(hInstance, MAKEINTRESOURCE(IDR_MENU1));
+	SetMenu(hDlgMain, hMenu);
 
 	while ((ret = GetMessage(&msg, 0, 0, 0)) != 0) {
 		if (ret == -1) /* error found */
