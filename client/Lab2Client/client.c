@@ -324,8 +324,12 @@ INT_PTR CALLBACK addPlanetProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPara
 	return FALSE;
 }
 
+
 INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	HWND localPlanetsList = GetDlgItem(hDlg, ID_LIST_LOCAL_PLANETS);
+	// Get selected index. (In ListBox)
+	int lbItem = (int)SendMessage(localPlanetsList, LB_GETCURSEL, 0, 0);
 	switch (uMsg)
 	{
 	case WM_INITDIALOG:
@@ -351,6 +355,39 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					ShowWindow(addPlanetDialog, SW_SHOW);
 					return TRUE;
 				}
+			case ID_BUTTON_EDIT:
+			{
+				if (lbItem == NULL) {
+					MessageBox(hDlg, "You must target a planet", "Warning!",
+						MB_OK | MB_ICONINFORMATION);
+					break;
+				}
+				ShowWindow(GetDlgItem(hDlg, ID_BUTTON_EDIT_OK), SW_SHOW);
+				ShowWindow(GetDlgItem(hDlg, ID_BUTTON_EDIT_CANCEL), SW_SHOW);
+				SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_NAME), EM_SETREADONLY, FALSE, 0);
+				SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_POSITIONY), EM_SETREADONLY, FALSE, 0);
+				SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_POSITIONX), EM_SETREADONLY, FALSE, 0);
+				SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_VELOCITYY), EM_SETREADONLY, FALSE, 0);
+				SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_VELOCITYX), EM_SETREADONLY, FALSE, 0);
+				return TRUE;
+			}
+			case ID_BUTTON_EDIT_OK:
+			{
+				planet_type *editPlanet = (planet_type*)calloc(1, sizeof(planet_type));
+				TCHAR tempString[128];
+				
+				
+				editPlanet = getPlanetAt(lbItem);
+				GetWindowText(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_NAME), tempString, 128);
+				sprintf(editPlanet->name, tempString);
+				free(editPlanet);
+				return TRUE;
+			}
+			case ID_BUTTON_EDIT_CANCEL:
+			{
+				SendMessage(hDlg, WM_CLOSE, 0, 0);
+				return TRUE;
+			}
 			}
 
 			case ID_LIST_LOCAL_PLANETS:
