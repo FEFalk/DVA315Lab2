@@ -213,6 +213,87 @@ void windowRefreshTimer(HWND hWnd, int updateFreq) {
 /*****  Lab 3: Check in MSDN GetOpenFileName and GetSaveFileName  *********/
 /**************  what the parameters mean, and what you must call this function with *********/
 
+void loadPlanets(HWND hDlg)
+{
+	//LOAD FILE
+	OPENFILENAME ofn;
+	char szFileName[MAX_PATH] = "";
+
+	ZeroMemory(&ofn, sizeof(ofn));
+
+	ofn.lStructSize = sizeof(ofn);
+	ofn.hwndOwner = hDlg;
+	ofn.lpstrFilter = "(*.txt); (*.dat)\0*.txt;*.dat\0All Files (*.*)\0*.*\0";
+	ofn.lpstrFile = szFileName;
+	ofn.nMaxFile = MAX_PATH;
+	ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
+	ofn.lpstrDefExt = "txt";
+	if (GetOpenFileName(&ofn))
+	{
+		// Do something usefull with the filename stored in szFileName 
+		FILE *ptr_myfile;
+		planet_type *buf = (planet_type*)calloc(1, sizeof(planet_type));
+		planet_type *p;
+		ptr_myfile = fopen(szFileName, "rb");
+		if (!ptr_myfile)
+		{
+			printf("Unable to open file!");
+			return 1;
+		}
+		while (fread(buf, sizeof(planet_type), 1, ptr_myfile) != sizeof(planet_type))
+		{
+			if (feof(ptr_myfile))
+				break;
+
+			p = (planet_type*)calloc(1, sizeof(planet_type));
+			memcpy(p, buf, sizeof(planet_type));
+			addPlanet(p);
+			SendMessage(GetDlgItem(hDlg, ID_LIST_LOCAL_PLANETS), LB_ADDSTRING, 0, (LPARAM)p->name);
+			MessageBox(hDlg, "Successfully added planets to local list!", "Warning!",
+				MB_OK | MB_ICONINFORMATION);
+		}
+		fclose(ptr_myfile);
+	}
+}
+
+void savePlanets(HWND hDlg)
+{
+	//LOAD FILE
+	OPENFILENAME ofn;
+	char szFileName[MAX_PATH] = "";
+
+	ZeroMemory(&ofn, sizeof(ofn));
+
+	ofn.lStructSize = sizeof(ofn);
+	ofn.hwndOwner = hDlg;
+	ofn.lpstrFilter = "(*.txt); (*.dat)\0*.txt;*.dat\0All Files (*.*)\0*.*\0";
+	ofn.lpstrFile = szFileName;
+	ofn.nMaxFile = MAX_PATH;
+	ofn.Flags = OFN_EXPLORER | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT;
+	ofn.lpstrDefExt = "txt";
+	if (GetOpenFileName(&ofn))
+	{
+		// Do something usefull with the filename stored in szFileName 
+		FILE *ptr_myfile;
+
+		planet_type *buf = (planet_type*)calloc(1, sizeof(planet_type));
+		planet_type *p;
+
+		ptr_myfile = fopen(szFileName, "wb");
+		if (!ptr_myfile)
+		{
+			printf("Unable to open file!");
+			return 1;
+		}
+
+		while (fwrite(buf, sizeof(planet_type), 1, ptr_myfile) != sizeof(planet_type));
+
+		MessageBox(hDlg, "Successfully added planets to file!", "Warning!",
+			MB_OK | MB_ICONINFORMATION);
+		fclose(ptr_myfile);
+	}
+}
+
 BOOL checkFields(HWND hDlg)
 {
 	planet_type *planet = (planet_type*)calloc(1, sizeof(planet_type));
@@ -283,6 +364,7 @@ BOOL checkFields(HWND hDlg)
 			return FALSE;
 		}
 	}
+	planet->next = NULL;
 	GlobalFree((HANDLE)buf);
 	addPlanet(planet);
 	return TRUE;
