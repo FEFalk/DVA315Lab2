@@ -247,6 +247,7 @@ void loadPlanets(HWND hDlg)
 
 			p = (planet_type*)calloc(1, sizeof(planet_type));
 			memcpy(p, buf, sizeof(planet_type));
+			p->next = NULL;
 			addPlanet(p);
 			SendMessage(GetDlgItem(hDlg, ID_LIST_LOCAL_PLANETS), LB_ADDSTRING, 0, (LPARAM)p->name);
 			MessageBox(hDlg, "Successfully added planets to local list!", "Warning!",
@@ -275,9 +276,10 @@ void savePlanets(HWND hDlg)
 	{
 		// Do something usefull with the filename stored in szFileName 
 		FILE *ptr_myfile;
-
-		planet_type *buf = (planet_type*)calloc(1, sizeof(planet_type));
-		planet_type *p;
+		planet_type *buf;
+		int dSize = getDatabaseSize()+1;
+		buf = (planet_type*)calloc(dSize, sizeof(planet_type));
+		fillArrayFromDatabase(buf);
 
 		ptr_myfile = fopen(szFileName, "wb");
 		if (!ptr_myfile)
@@ -286,14 +288,45 @@ void savePlanets(HWND hDlg)
 			return 1;
 		}
 
-		while (fwrite(buf, sizeof(planet_type), 1, ptr_myfile) != sizeof(planet_type));
+		fwrite(buf, sizeof(planet_type), dSize, ptr_myfile);
+		
 
 		MessageBox(hDlg, "Successfully added planets to file!", "Warning!",
 			MB_OK | MB_ICONINFORMATION);
 		fclose(ptr_myfile);
 	}
 }
+BOOL checkFieldsEmpty(HWND hDlg) 
+{
+	char *p;
+	int i, bufInt = 0;
+	char* buf;
+	int editBoxArray[7] =
+	{
+		ID_EDIT_PLANET_NAME,
+		ID_EDIT_PLANET_X_P,
+		ID_EDIT_PLANET_Y_P,
+		ID_EDIT_PLANET_X_V,
+		ID_EDIT_PLANET_Y_V,
+		ID_EDIT_PLANET_MASS,
+		ID_EDIT_PLANET_LIFE
+	};
 
+	int len;
+	for (int i = 0; i < 7; i++)
+	{
+		len = GetWindowTextLength(GetDlgItem(hDlg, editBoxArray[i]));
+		if (len > 0)
+		{
+			return FALSE;
+		}
+		else
+		{
+			
+		}
+	}
+	return TRUE;
+}
 BOOL checkFields(HWND hDlg)
 {
 	planet_type *planet = (planet_type*)calloc(1, sizeof(planet_type));
@@ -359,7 +392,37 @@ BOOL checkFields(HWND hDlg)
 		else
 		{
 			//error
-			MessageBox(hDlg, TEXT("The field %d is empty!", editBoxArray[i]), "Warning!",
+			char msg[100];
+			char fieldName[20];
+			switch (i) 
+			{
+			case 0:
+				sprintf(fieldName, "Name");
+				break;
+			case 1:
+				sprintf(fieldName, "X-Position");
+				break;
+			case 2:
+				sprintf(fieldName, "Y-Position");
+				break;
+			case 3:
+				sprintf(fieldName, "X-Velocity");
+				break;
+			case 4:
+				sprintf(fieldName, "Y-Velocity");
+				break;
+			case 5:
+				sprintf(fieldName, "Mass");
+				break;
+			case 6:
+				sprintf(fieldName, "Life");
+				break;
+			default:
+				break;
+
+			}
+			sprintf(msg, "The field '%s' is empty! Please fill out all information.", fieldName);
+			MessageBox(hDlg, msg, "Warning!",
 				MB_OK | MB_ICONINFORMATION);
 			return FALSE;
 		}

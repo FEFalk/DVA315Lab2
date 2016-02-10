@@ -21,8 +21,8 @@ extern int mailslotClose(HANDLE mailSlot);
 extern HANDLE OpenFileDialog(char* string, DWORD accessMode, DWORD howToCreate);
 
 extern BOOL checkFields(HWND hDlg);
+BOOL checkFieldsEmpty(HWND hDlg);
 void loadPlanets(HWND hDlg);
-
 // Struct for planet data will be used in lab 2 and 3 !!!!!
 // Just ignore in lab1 or you can try to send it on your mailslot, 
 // will be done in lab 2 and 3

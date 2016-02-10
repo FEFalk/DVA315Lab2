@@ -126,7 +126,21 @@ void planetThread(int serverListIndex) {
 //	threads[index] = NULL;
 //}
 
-int *getDatabaseSize()
+void fillArrayFromDatabase(planet_type *buf)
+{
+
+	planet_type *traverser = localDatabase;
+	int i;
+	if (traverser != 0)
+	{
+		for (i = 0; traverser != 0; i++)
+		{
+			memcpy(buf+i, traverser, sizeof(planet_type));
+			traverser = traverser->next;
+		}
+	}
+}
+int getDatabaseSize()
 {
 	planet_type *traverser = localDatabase;
 	int i;
@@ -137,9 +151,7 @@ int *getDatabaseSize()
 			traverser = traverser->next;
 		}
 	}
-
 	return i;
-
 }
 planet_type *getPlanetWithPID(DWORD pid)
 {
@@ -287,9 +299,16 @@ INT_PTR CALLBACK addPlanetProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPara
 		return TRUE;
 	}
 	case WM_CLOSE:
-		if (MessageBox(hDlg,
-			TEXT("Close the window?"), TEXT("Close"),
-			MB_ICONQUESTION | MB_YESNO) == IDYES)
+		if (checkFieldsEmpty(hDlg) == FALSE)
+		{
+			if (MessageBox(hDlg,
+				TEXT("Close the window?"), TEXT("Close"),
+				MB_ICONQUESTION | MB_YESNO) == IDYES)
+			{
+				ShowWindow(hDlg, SW_HIDE);
+			}
+		}
+		else
 		{
 			ShowWindow(hDlg, SW_HIDE);
 		}
@@ -336,6 +355,20 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				return TRUE;
 			case ID_BUTTON_ADD:
 				{
+					SendMessage(GetDlgItem(addPlanetDialog, ID_EDIT_PLANET_NAME), EM_SETSEL, 0, -1);
+					SendMessage(GetDlgItem(addPlanetDialog, ID_EDIT_PLANET_NAME), WM_CLEAR, 0, 0);
+					SendMessage(GetDlgItem(addPlanetDialog, ID_EDIT_PLANET_X_P), EM_SETSEL, 0, -1);
+					SendMessage(GetDlgItem(addPlanetDialog, ID_EDIT_PLANET_X_P), WM_CLEAR, 0, 0);
+					SendMessage(GetDlgItem(addPlanetDialog, ID_EDIT_PLANET_Y_P), EM_SETSEL, 0, -1);
+					SendMessage(GetDlgItem(addPlanetDialog, ID_EDIT_PLANET_Y_P), WM_CLEAR, 0, 0);
+					SendMessage(GetDlgItem(addPlanetDialog, ID_EDIT_PLANET_X_V), EM_SETSEL, 0, -1);
+					SendMessage(GetDlgItem(addPlanetDialog, ID_EDIT_PLANET_X_V), WM_CLEAR, 0, 0);
+					SendMessage(GetDlgItem(addPlanetDialog, ID_EDIT_PLANET_Y_V), EM_SETSEL, 0, -1);
+					SendMessage(GetDlgItem(addPlanetDialog, ID_EDIT_PLANET_Y_V), WM_CLEAR, 0, 0);
+					SendMessage(GetDlgItem(addPlanetDialog, ID_EDIT_PLANET_MASS), EM_SETSEL, 0, -1);
+					SendMessage(GetDlgItem(addPlanetDialog, ID_EDIT_PLANET_MASS), WM_CLEAR, 0, 0);
+					SendMessage(GetDlgItem(addPlanetDialog, ID_EDIT_PLANET_LIFE), EM_SETSEL, 0, -1);
+					SendMessage(GetDlgItem(addPlanetDialog, ID_EDIT_PLANET_LIFE), WM_CLEAR, 0, 0);
 					ShowWindow(addPlanetDialog, SW_SHOW);
 					return TRUE;
 				}
@@ -348,7 +381,7 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			case ID_FILE_SAVE:
 				{
 					//SAVE FILE
-
+					savePlanets(hDlg);
 					return TRUE;
 				}
 			case ID_FILE_EXIT:
