@@ -334,7 +334,7 @@ BOOL checkFields(HWND hDlg)
 	HWND localPlanetsList = GetDlgItem(GetParent(hDlg), ID_LIST_LOCAL_PLANETS);
 	char *p;
 	int i, bufInt = 0;
-	char* buf;
+	char* buf, *buf2;
 	int editBoxArray[7] =
 	{
 		ID_EDIT_PLANET_NAME,
@@ -345,45 +345,114 @@ BOOL checkFields(HWND hDlg)
 		ID_EDIT_PLANET_MASS,
 		ID_EDIT_PLANET_LIFE
 	};
-	int len;
+	int len, totlen;
 	for (int i = 0; i < 7; i++)
 	{
-		len = GetWindowTextLength(GetDlgItem(hDlg, editBoxArray[i]));
+		len = totlen = GetWindowTextLength(GetDlgItem(hDlg, editBoxArray[i]));
 		if (len > 0)
 		{
-			buf = (char*)GlobalAlloc(GPTR, len + 1);
-			GetDlgItemText(hDlg, editBoxArray[i], buf, len + 1);
-
+			
 			switch (editBoxArray[i])
 			{
 			case ID_EDIT_PLANET_NAME:
-			{
-				if (strlen(buf) > 20)MessageBox(hDlg, TEXT("Error too big!\n"), TEXT("Error!"), MB_OK);
-				else
 				{
-					sprintf(planet->name, buf);
-					if ((p = strchr(planet->name, '\n')) != NULL)
-						*p = '\0';
+					buf = (char*)GlobalAlloc(GPTR, len + 1);
+					GetDlgItemText(hDlg, editBoxArray[i], buf, len + 1);
+					if (strlen(buf) > 20)MessageBox(hDlg, TEXT("Error too big!\n"), TEXT("Error!"), MB_OK);
+					else
+					{
+						sprintf(planet->name, buf);
+						if ((p = strchr(planet->name, '\n')) != NULL)
+							*p = '\0';
+					}
 				}
-			}
-			break;
+				break;
 			case ID_EDIT_PLANET_X_P:
-				planet->sx = atoi(buf);
+				{
+					len = GetWindowTextLength(GetDlgItem(hDlg, ID_EDIT_PLANET_X_P2));
+					totlen += len;
+					buf = (char*)GlobalAlloc(GPTR, totlen + 2);
+					buf2 = (char*)GlobalAlloc(GPTR, len + 1);
+					GetDlgItemText(hDlg, editBoxArray[i], buf, len + 1);
+					GetDlgItemText(hDlg, ID_EDIT_PLANET_X_P2, buf2, len + 1);
+
+					strcat(buf, ".");
+					strcat(buf, buf2);
+
+					planet->sx = atof(buf);
+				}
 				break;
 			case ID_EDIT_PLANET_Y_P:
-				planet->sy = atoi(buf);
+				{
+					len = GetWindowTextLength(GetDlgItem(hDlg, ID_EDIT_PLANET_Y_P2));
+					totlen += len;
+					buf = (char*)GlobalAlloc(GPTR, totlen + 2);
+					buf2 = (char*)GlobalAlloc(GPTR, len + 1);
+					GetDlgItemText(hDlg, editBoxArray[i], buf, len + 1);
+					GetDlgItemText(hDlg, ID_EDIT_PLANET_Y_P2, buf2, len + 1);
+
+					strcat(buf, ".");
+					strcat(buf, buf2);
+
+					planet->sy = atof(buf);
+				}
 				break;
 			case ID_EDIT_PLANET_X_V:
-				planet->vx = atoi(buf);
+				{
+					len = GetWindowTextLength(GetDlgItem(hDlg, ID_EDIT_PLANET_X_V2));
+					totlen += len;
+					buf = (char*)GlobalAlloc(GPTR, totlen + 2);
+					buf2 = (char*)GlobalAlloc(GPTR, len + 1);
+					GetDlgItemText(hDlg, editBoxArray[i], buf, len + 1);
+					GetDlgItemText(hDlg, ID_EDIT_PLANET_X_V2, buf2, len + 1);
+
+					strcat(buf, ".");
+					strcat(buf, buf2);
+
+					planet->vx = atof(buf);
+				}
 				break;
 			case ID_EDIT_PLANET_Y_V:
-				planet->vy = atoi(buf);
+				{
+					len = GetWindowTextLength(GetDlgItem(hDlg, ID_EDIT_PLANET_Y_V2));
+					totlen += len;
+					buf = (char*)GlobalAlloc(GPTR, totlen + 2);
+					buf2 = (char*)GlobalAlloc(GPTR, len + 1);
+					GetDlgItemText(hDlg, editBoxArray[i], buf, len + 1);
+					GetDlgItemText(hDlg, ID_EDIT_PLANET_Y_V2, buf2, len + 1);
+
+					strcat(buf, ".");
+					strcat(buf, buf2);
+					planet->vy = atof(buf);
+				}
 				break;
 			case ID_EDIT_PLANET_MASS:
-				planet->mass = atoi(buf);
+				{
+					len = GetWindowTextLength(GetDlgItem(hDlg, ID_EDIT_PLANET_MASS2));
+					totlen += len;
+					buf = (char*)GlobalAlloc(GPTR, totlen + 2);
+					buf2 = (char*)GlobalAlloc(GPTR, len + 1);
+					GetDlgItemText(hDlg, editBoxArray[i], buf, len + 1);
+					GetDlgItemText(hDlg, ID_EDIT_PLANET_MASS2, buf2, len + 1);
+
+					strcat(buf, ".");
+					strcat(buf, buf2);
+					planet->mass = atof(buf);
+				}
 				break;
 			case ID_EDIT_PLANET_LIFE:
-				planet->life = atoi(buf);
+				{
+					len = GetWindowTextLength(GetDlgItem(hDlg, ID_EDIT_PLANET_LIFE2));
+					totlen += len;
+					buf = (char*)GlobalAlloc(GPTR, totlen + 2);
+					buf2 = (char*)GlobalAlloc(GPTR, len + 1);
+					GetDlgItemText(hDlg, editBoxArray[i], buf, len + 1);
+					GetDlgItemText(hDlg, ID_EDIT_PLANET_LIFE2, buf2, len + 1);
+
+					strcat(buf, ".");
+					strcat(buf, buf2);
+					planet->life = atof(buf);
+				}
 				break;
 			default:
 				break;

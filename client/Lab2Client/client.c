@@ -320,6 +320,8 @@ INT_PTR CALLBACK addPlanetProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPara
 	return FALSE;
 }
 
+
+
 HANDLE mailSlot;
 INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -444,9 +446,9 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 							// Do something with the data from Roster[i]
 							TCHAR buff[MAX_PATH];
 							StringCbPrintf(buff, ARRAYSIZE(buff),
-								TEXT("Planet Name: %s\Planet X-Position: %d\Planet Y-Position: %d"),
-								selectedPlanet->name, (int)selectedPlanet->sx,
-								(int)selectedPlanet->sy);
+								TEXT("Planet Name: %s\Planet X-Position: %f\Planet Y-Position: %f"),
+								selectedPlanet->name, selectedPlanet->sx,
+								selectedPlanet->sy);
 
 							SetDlgItemText(hDlg, ID_STATIC_LOCAL_PLANET_INFO, buff);
 
@@ -485,9 +487,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	BOOL ret;
 	MSG msg;
 	HMENU hMenu;
-
 	hDlgMain = CreateDialogParam(hInstance, MAKEINTRESOURCE(ID_DIALOG_MAIN), 0, DialogProc, 0);
 	ShowWindow(hDlgMain, nCmdShow);
+
 
 	hMenu = LoadMenu(hInstance, MAKEINTRESOURCE(IDR_MENU1));
 	SetMenu(hDlgMain, hMenu);
