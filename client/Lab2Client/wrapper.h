@@ -20,8 +20,7 @@ extern int mailslotRead(HANDLE mailSlot, void * msg, int msgSize);
 extern int mailslotClose(HANDLE mailSlot);
 extern HANDLE OpenFileDialog(char* string, DWORD accessMode, DWORD howToCreate);
 
-extern BOOL checkFields(HWND hDlg);
-BOOL checkEditFields(HWND hDlg);
+
 BOOL checkFieldsEmpty(HWND hDlg);
 void stringSeparate(char *s, char *digitString, char *decimalString);
 void selectedPlanet(HWND hDlg);
@@ -41,5 +40,8 @@ typedef struct pt {
 	int			life;		// Planet life
 	char		pid[30];	// String containing ID of creating process
 } planet_type;
+
+void editPlanetWithEditBoxes(HWND hDlg, BOOL isAddingPlanet, planet_type *planet, int *editBoxArray);
+BOOL checkFields(HWND hDlg, int *editBoxArray);
 
 #endif /* WRAPPER_H */

@@ -250,9 +250,9 @@ void loadPlanets(HWND hDlg)
 			p->next = NULL;
 			addPlanet(p);
 			SendMessage(GetDlgItem(hDlg, ID_LIST_LOCAL_PLANETS), LB_ADDSTRING, 0, (LPARAM)p->name);
-			MessageBox(hDlg, "Successfully added planets to local list!", "Warning!",
-				MB_OK | MB_ICONINFORMATION);
 		}
+		MessageBox(hDlg, "Successfully added planets to local list!", "Warning!",
+			MB_OK | MB_ICONINFORMATION);
 		fclose(ptr_myfile);
 	}
 }
@@ -320,54 +320,15 @@ BOOL checkFieldsEmpty(HWND hDlg)
 		{
 			return FALSE;
 		}
-		else
-		{
-			
-		}
 	}
 	return TRUE;
 }
-BOOL checkFields(HWND hDlg, HWND localPlanetsList, BOOL isAddingPlanet, planet_type *planet)
+BOOL checkFields(HWND hDlg, int *editBoxArray)
 {
-	char *p;
-	int i, bufInt = 0;
-	char* buf, *buf2;
-	int *editBoxArray = calloc(12, sizeof(int));
-	if (isAddingPlanet)
-	{
-		editBoxArray[0] = ID_EDIT_PLANET_NAME;
-		editBoxArray[1] = ID_EDIT_PLANET_LIFE;
-		editBoxArray[2] = ID_EDIT_PLANET_MASS;
-		editBoxArray[3] = ID_EDIT_PLANET_MASS2;
-		editBoxArray[4] = ID_EDIT_PLANET_X_P;
-		editBoxArray[5] = ID_EDIT_PLANET_X_P2;
-		editBoxArray[6] = ID_EDIT_PLANET_Y_P;
-		editBoxArray[7] = ID_EDIT_PLANET_Y_P2;
-		editBoxArray[8] = ID_EDIT_PLANET_X_V;
-		editBoxArray[9] = ID_EDIT_PLANET_X_V2;
-		editBoxArray[10] = ID_EDIT_PLANET_Y_V;
-		editBoxArray[11] = ID_EDIT_PLANET_Y_V2;
-	}
-	else
-	{
-		editBoxArray[0] = ID_EDIT_LOCAL_PLANET_INFO_NAME;
-		editBoxArray[1] = ID_EDIT_LOCAL_PLANET_INFO_LIFE;
-		editBoxArray[2] = ID_EDIT_LOCAL_PLANET_INFO_MASS;
-		editBoxArray[3] = ID_EDIT_LOCAL_PLANET_INFO_MASS2;
-		editBoxArray[4] = ID_EDIT_LOCAL_PLANET_INFO_POSITIONX;
-		editBoxArray[5] = ID_EDIT_LOCAL_PLANET_INFO_POSITIONX2;
-		editBoxArray[6] = ID_EDIT_LOCAL_PLANET_INFO_POSITIONY;
-		editBoxArray[7] = ID_EDIT_LOCAL_PLANET_INFO_POSITIONY2;
-		editBoxArray[8] = ID_EDIT_LOCAL_PLANET_INFO_VELOCITYX;
-		editBoxArray[9] = ID_EDIT_LOCAL_PLANET_INFO_VELOCITYX2;
-		editBoxArray[10] = ID_EDIT_LOCAL_PLANET_INFO_VELOCITYY;
-		editBoxArray[11] = ID_EDIT_LOCAL_PLANET_INFO_VELOCITYY2;
-	}
-
-	int len, totlen;
+	int len;
 	for (int i = 0; i < 12; i++)
 	{
-		len = totlen = GetWindowTextLength(GetDlgItem(hDlg, editBoxArray[i]));
+		len = GetWindowTextLength(GetDlgItem(hDlg, editBoxArray[i]));
 		
 		if (len <= 0 || len > 20)
 		{
@@ -431,6 +392,14 @@ BOOL checkFields(HWND hDlg, HWND localPlanetsList, BOOL isAddingPlanet, planet_t
 			return FALSE;
 		}
 	}
+	return TRUE;
+}
+
+void editPlanetWithEditBoxes(HWND hDlg, BOOL isAddingPlanet, planet_type *planet, int *editBoxArray)
+{
+	char *p;
+	char* buf, *buf2;
+	int len, totlen;
 	for (int i = 0; i < 12; i += 2)
 	{
 		len = totlen = GetWindowTextLength(GetDlgItem(hDlg, editBoxArray[i]));
@@ -492,9 +461,8 @@ BOOL checkFields(HWND hDlg, HWND localPlanetsList, BOOL isAddingPlanet, planet_t
 		planet->next = NULL;
 		addPlanet(planet);
 	}
-	
+
 	GlobalFree((HANDLE)buf);
-	return TRUE;
 }
 
 void selectedPlanet(HWND hDlg)
