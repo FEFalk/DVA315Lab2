@@ -282,7 +282,9 @@ INT_PTR CALLBACK addPlanetProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPara
 		case IDOK:
 		{
 			HWND localPlanetsList = GetDlgItem(GetParent(hDlg), ID_LIST_LOCAL_PLANETS);
-			if (checkFields(hDlg))
+			planet_type *planet = (planet_type*)calloc(1, sizeof(planet_type));
+			planet->next = NULL;
+			if (checkFields(hDlg, localPlanetsList, TRUE, planet))
 			{
 				int pos = (int)SendMessage(localPlanetsList, LB_ADDSTRING, 0, (LPARAM)getLastPlanet()->name);
 				SendMessage(localPlanetsList, LB_SETITEMDATA, pos, getPlanetIndex(getLastPlanet()));
@@ -443,24 +445,23 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			TCHAR tempString[128];
 
 
-
-			if (checkEditFields(hDlg)) //Check fields for wrong input and store floats in one variable
+			if (checkFields(hDlg, localPlanetsList, FALSE, getPlanetAt(lbItem))) //Check fields for wrong input and store floats in one variable
 			{
-				//store the input from the boxes in the struct
-				GetWindowText(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_NAME), tempString, 128);
-				sprintf(getPlanetAt(lbItem)->name, tempString);
-				GetWindowText(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_LIFE), tempString, 128);
-				getPlanetAt(lbItem)->life = atoi(tempString);
-				GetWindowText(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_MASS), tempString, 128);
-				getPlanetAt(lbItem)->mass = atof(tempString);
-				GetWindowText(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_POSITIONX), tempString, 128);
-				getPlanetAt(lbItem)->sx = atof(tempString);
-				GetWindowText(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_POSITIONY), tempString, 128);
-				getPlanetAt(lbItem)->sy = atof(tempString);
-				GetWindowText(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_VELOCITYX), tempString, 128);
-				getPlanetAt(lbItem)->vx = atof(tempString);
-				GetWindowText(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_VELOCITYY), tempString, 128);
-				getPlanetAt(lbItem)->vy = atof(tempString);
+				////store the input from the boxes in the struct
+				//GetWindowText(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_NAME), tempString, 128);
+				//sprintf(getPlanetAt(lbItem)->name, tempString);
+				//GetWindowText(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_LIFE), tempString, 128);
+				//getPlanetAt(lbItem)->life = atoi(tempString);
+				//GetWindowText(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_MASS), tempString, 128);
+				//getPlanetAt(lbItem)->mass = atof(tempString);
+				//GetWindowText(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_POSITIONX), tempString, 128);
+				//getPlanetAt(lbItem)->sx = atof(tempString);
+				//GetWindowText(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_POSITIONY), tempString, 128);
+				//getPlanetAt(lbItem)->sy = atof(tempString);
+				//GetWindowText(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_VELOCITYX), tempString, 128);
+				//getPlanetAt(lbItem)->vx = atof(tempString);
+				//GetWindowText(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_VELOCITYY), tempString, 128);
+				//getPlanetAt(lbItem)->vy = atof(tempString);
 
 				int pos = (int)SendMessage(localPlanetsList, LB_GETCURSEL, 0, 0);
 				SendMessage(localPlanetsList, LB_DELETESTRING, pos, (LPARAM)tempString);

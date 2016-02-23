@@ -327,158 +327,49 @@ BOOL checkFieldsEmpty(HWND hDlg)
 	}
 	return TRUE;
 }
-BOOL checkFields(HWND hDlg, HWND localPlanetsList)
+BOOL checkFields(HWND hDlg, HWND localPlanetsList, BOOL isAddingPlanet, planet_type *planet)
 {
-	planet_type *planet = (planet_type*)calloc(1, sizeof(planet_type));
-	planet->next = NULL;
 	char *p;
 	int i, bufInt = 0;
 	char* buf, *buf2;
-	int editBoxArray[12] =
+	int *editBoxArray = calloc(12, sizeof(int));
+	if (isAddingPlanet)
 	{
-		ID_EDIT_PLANET_NAME,
-		ID_EDIT_PLANET_LIFE,
-		ID_EDIT_PLANET_MASS,
-		ID_EDIT_PLANET_MASS2,
-		ID_EDIT_PLANET_X_P,
-		ID_EDIT_PLANET_X_P2,
-		ID_EDIT_PLANET_Y_P,
-		ID_EDIT_PLANET_Y_P2,
-		ID_EDIT_PLANET_X_V,
-		ID_EDIT_PLANET_X_V2,
-		ID_EDIT_PLANET_Y_V,
-		ID_EDIT_PLANET_Y_V2
-	};
-	int len, totlen;
-	for (int i = 0; i < 12; i+=2)
-	{
-		len = totlen = GetWindowTextLength(GetDlgItem(hDlg, editBoxArray[i]));
-		if (len > 0)
-		{
-			switch (editBoxArray[i])
-			{
-			case ID_EDIT_PLANET_NAME:
-			{
-				buf = (char*)GlobalAlloc(GPTR, len + 1);
-				GetDlgItemText(hDlg, editBoxArray[i], buf, len + 1);
-				if (strlen(buf) > 20)MessageBox(hDlg, TEXT("Error too big!\n"), TEXT("Error!"), MB_OK);
-				else
-				{
-					sprintf(planet->name, buf);
-					if ((p = strchr(planet->name, '\n')) != NULL)
-						*p = '\0';
-				}
-				i--;
-			}
-			break;
-			case ID_EDIT_PLANET_LIFE:
-			{
-				buf = (char*)GlobalAlloc(GPTR, len+1);
-				GetDlgItemText(hDlg, editBoxArray[i], buf, len+1);
-
-				planet->life = atoi(buf);
-				i--;
-			}
-			break;
-			default:
-			{
-				len = GetWindowTextLength(GetDlgItem(hDlg, editBoxArray[i + 1]));
-				totlen += len;
-				buf = (char*)GlobalAlloc(GPTR, totlen + 2);
-				buf2 = (char*)GlobalAlloc(GPTR, len + 1);
-				GetDlgItemText(hDlg, editBoxArray[i], buf, len + 1);
-				GetDlgItemText(hDlg, editBoxArray[i + 1], buf2, len + 1);
-
-				strcat(buf, ".");
-				strcat(buf, buf2);
-				switch (i) {
-				case 2: planet->mass = atof(buf); break;
-				case 4: planet->sx = atof(buf); break;
-				case 6: planet->sy = atof(buf); break;
-				case 8: planet->vx = atof(buf); break;
-				case 10: planet->vy = atof(buf); break;
-				default: break;
-				}
-			}
-			break;
-			}
-			
-		}
-		else
-		{
-			//error
-			char msg[100];
-			char fieldName[20];
-			switch (i) 
-			{
-			case 0:
-				sprintf(fieldName, "Name");
-				break;
-			case 1:
-				sprintf(fieldName, "Life");
-				break;
-			case 2:
-				sprintf(fieldName, "Mass");
-				break;
-			case 4:
-				sprintf(fieldName, "X-Position");
-				break;
-			case 6:
-				sprintf(fieldName, "Y-Position");
-				break;
-			case 8:
-				sprintf(fieldName, "X-Velocity");
-				break;
-			case 10:
-				sprintf(fieldName, "Y-Velocity");
-				break;
-			default:
-				break;
-
-			}
-			sprintf(msg, "The field '%s' is empty! Please fill out all information.", fieldName);
-			MessageBox(hDlg, msg, "Warning!",
-				MB_OK | MB_ICONINFORMATION);
-			return FALSE;
-		}
+		editBoxArray[0] = ID_EDIT_PLANET_NAME;
+		editBoxArray[1] = ID_EDIT_PLANET_LIFE;
+		editBoxArray[2] = ID_EDIT_PLANET_MASS;
+		editBoxArray[3] = ID_EDIT_PLANET_MASS2;
+		editBoxArray[4] = ID_EDIT_PLANET_X_P;
+		editBoxArray[5] = ID_EDIT_PLANET_X_P2;
+		editBoxArray[6] = ID_EDIT_PLANET_Y_P;
+		editBoxArray[7] = ID_EDIT_PLANET_Y_P2;
+		editBoxArray[8] = ID_EDIT_PLANET_X_V;
+		editBoxArray[9] = ID_EDIT_PLANET_X_V2;
+		editBoxArray[10] = ID_EDIT_PLANET_Y_V;
+		editBoxArray[11] = ID_EDIT_PLANET_Y_V2;
 	}
-	planet->next = NULL;
-	GlobalFree((HANDLE)buf);
-	addPlanet(planet);
-	return TRUE;
-}
-BOOL checkEditFields(HWND hDlg)
-{
-	HWND localPlanetsList = GetDlgItem(hDlg, ID_LIST_LOCAL_PLANETS);
-	char* buf;
-	int editBoxArray[12] =
+	else
 	{
-		ID_EDIT_LOCAL_PLANET_INFO_NAME,
-		ID_EDIT_LOCAL_PLANET_INFO_LIFE,
-		ID_EDIT_LOCAL_PLANET_INFO_MASS,
-		ID_EDIT_LOCAL_PLANET_INFO_MASS2,
-		ID_EDIT_LOCAL_PLANET_INFO_POSITIONX,
-		ID_EDIT_LOCAL_PLANET_INFO_POSITIONX2,
-		ID_EDIT_LOCAL_PLANET_INFO_POSITIONY,
-		ID_EDIT_LOCAL_PLANET_INFO_POSITIONY2,
-		ID_EDIT_LOCAL_PLANET_INFO_VELOCITYX,
-		ID_EDIT_LOCAL_PLANET_INFO_VELOCITYX2,
-		ID_EDIT_LOCAL_PLANET_INFO_VELOCITYY,
-		ID_EDIT_LOCAL_PLANET_INFO_VELOCITYY2
-	};
-	int len;
+		editBoxArray[0] = ID_EDIT_LOCAL_PLANET_INFO_NAME;
+		editBoxArray[1] = ID_EDIT_LOCAL_PLANET_INFO_LIFE;
+		editBoxArray[2] = ID_EDIT_LOCAL_PLANET_INFO_MASS;
+		editBoxArray[3] = ID_EDIT_LOCAL_PLANET_INFO_MASS2;
+		editBoxArray[4] = ID_EDIT_LOCAL_PLANET_INFO_POSITIONX;
+		editBoxArray[5] = ID_EDIT_LOCAL_PLANET_INFO_POSITIONX2;
+		editBoxArray[6] = ID_EDIT_LOCAL_PLANET_INFO_POSITIONY;
+		editBoxArray[7] = ID_EDIT_LOCAL_PLANET_INFO_POSITIONY2;
+		editBoxArray[8] = ID_EDIT_LOCAL_PLANET_INFO_VELOCITYX;
+		editBoxArray[9] = ID_EDIT_LOCAL_PLANET_INFO_VELOCITYX2;
+		editBoxArray[10] = ID_EDIT_LOCAL_PLANET_INFO_VELOCITYY;
+		editBoxArray[11] = ID_EDIT_LOCAL_PLANET_INFO_VELOCITYY2;
+	}
+
+	int len, totlen;
 	for (int i = 0; i < 12; i++)
 	{
-		len = GetWindowTextLength(GetDlgItem(hDlg, editBoxArray[i]));
-		if (editBoxArray[i] == ID_EDIT_LOCAL_PLANET_INFO_NAME)
-		{
-			buf = (char*)GlobalAlloc(GPTR, len + 1);
-			GetDlgItemText(hDlg, editBoxArray[i], buf, len + 1);
-			if (strlen(buf) > 20)
-				MessageBox(hDlg, TEXT("Error too big!\n"), TEXT("Error!"), MB_OK);
-			continue;
-		}
-		else if (len <= 0 || len > 8)
+		len = totlen = GetWindowTextLength(GetDlgItem(hDlg, editBoxArray[i]));
+		
+		if (len <= 0 || len > 20)
 		{
 			//error
 			char msg[100];
@@ -537,10 +428,71 @@ BOOL checkEditFields(HWND hDlg)
 				MessageBox(hDlg, msg, "Warning!",
 					MB_OK | MB_ICONINFORMATION);
 			}
-
 			return FALSE;
 		}
 	}
+	for (int i = 0; i < 12; i += 2)
+	{
+		len = totlen = GetWindowTextLength(GetDlgItem(hDlg, editBoxArray[i]));
+
+		switch (editBoxArray[i])
+		{
+		case ID_EDIT_PLANET_NAME:
+		case ID_EDIT_LOCAL_PLANET_INFO_NAME:
+		{
+			buf = (char*)GlobalAlloc(GPTR, len + 1);
+			GetDlgItemText(hDlg, editBoxArray[i], buf, len + 1);
+			if (strlen(buf) > 20)
+				MessageBox(hDlg, TEXT("Error too big!\n"), TEXT("Error!"), MB_OK);
+			else
+			{
+				sprintf(planet->name, buf);
+				if ((p = strchr(planet->name, '\n')) != NULL)
+					*p = '\0';
+			}
+			i--;
+		}
+		break;
+		case ID_EDIT_PLANET_LIFE:
+		case ID_EDIT_LOCAL_PLANET_INFO_LIFE:
+		{
+			buf = (char*)GlobalAlloc(GPTR, len + 1);
+			GetDlgItemText(hDlg, editBoxArray[i], buf, len + 1);
+
+			planet->life = atoi(buf);
+			i--;
+		}
+		break;
+		default:
+		{
+			len = GetWindowTextLength(GetDlgItem(hDlg, editBoxArray[i + 1]));
+			totlen += len;
+			buf = (char*)GlobalAlloc(GPTR, totlen + 2);
+			buf2 = (char*)GlobalAlloc(GPTR, len + 1);
+			GetDlgItemText(hDlg, editBoxArray[i], buf, len + 1);
+			GetDlgItemText(hDlg, editBoxArray[i + 1], buf2, len + 1);
+
+			strcat(buf, ".");
+			strcat(buf, buf2);
+			switch (i) {
+			case 2: planet->mass = atof(buf); break;
+			case 4: planet->sx = atof(buf); break;
+			case 6: planet->sy = atof(buf); break;
+			case 8: planet->vx = atof(buf); break;
+			case 10: planet->vy = atof(buf); break;
+			default: break;
+			}
+		}
+		break;
+		}
+	}
+
+	if (isAddingPlanet)
+	{
+		planet->next = NULL;
+		addPlanet(planet);
+	}
+	
 	GlobalFree((HANDLE)buf);
 	return TRUE;
 }
