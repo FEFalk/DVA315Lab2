@@ -282,7 +282,7 @@ INT_PTR CALLBACK addPlanetProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPara
 		case IDOK:
 			{
 				HWND localPlanetsList = GetDlgItem(GetParent(hDlg), ID_LIST_LOCAL_PLANETS);
-				if (checkFields(hDlg))
+				if (checkFields(hDlg, localPlanetsList))
 				{
 					int pos = (int)SendMessage(localPlanetsList, LB_ADDSTRING, 0, (LPARAM)getLastPlanet()->name);
 					SendMessage(localPlanetsList, LB_SETITEMDATA, pos, getPlanetIndex(getLastPlanet()));
@@ -346,7 +346,6 @@ void showEditPlanet(HWND hDlg, BOOL hide) {
 HANDLE mailSlot;
 INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-
 	switch (uMsg)
 	{
 	case WM_INITDIALOG:
@@ -402,7 +401,7 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				// Get selected index. (In ListBox)
 				int lbItem = (int)SendMessage(localPlanetsList, LB_GETCURSEL, 0, 0);
 				if (lbItem == LB_ERR) {
-					MessageBox(hDlg, "You must target a planet", "Warning!",
+					MessageBox(hDlg, "You must select a planet", "Warning!",
 						MB_OK | MB_ICONINFORMATION);
 					break;
 				}
@@ -525,13 +524,13 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 							// Do something with the data from Roster[i]
 							sprintf(buff, selectedPlanet->name);
 							BOOL setText = SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_NAME), WM_SETTEXT, 0, buff);
-							sprintf(buff, "%lf", selectedPlanet->sx);
+							sprintf(buff, "%f", selectedPlanet->sx);
 							setText = SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_POSITIONX), WM_SETTEXT, 0, buff);
-							sprintf(buff, "%lf", selectedPlanet->sy);
+							sprintf(buff, "%f", selectedPlanet->sy);
 							setText = SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_POSITIONY), WM_SETTEXT, 0, buff);
-							sprintf(buff, "%lf", selectedPlanet->vx);
+							sprintf(buff, "%f", selectedPlanet->vx);
 							setText = SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_VELOCITYX), WM_SETTEXT, 0, buff);
-							sprintf(buff, "%lf", selectedPlanet->vy);
+							sprintf(buff, "%f", selectedPlanet->vy);
 							setText = SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_VELOCITYY), WM_SETTEXT, 0, buff);
 							return TRUE;
 						}
