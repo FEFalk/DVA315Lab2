@@ -350,7 +350,7 @@ BOOL checkFields(HWND hDlg, HWND localPlanetsList)
 		ID_EDIT_PLANET_Y_V2
 	};
 	int len, totlen;
-	for (int i = 0; i < 7; i+=2)
+	for (int i = 0; i < 7; i++)
 	{
 		len = totlen = GetWindowTextLength(GetDlgItem(hDlg, editBoxArray[i]));
 		if (len > 0)
@@ -471,7 +471,7 @@ BOOL checkEditFields(HWND hDlg, planet_type *planet)
 		ID_EDIT_LOCAL_PLANET_INFO_VELOCITYY2
 	};
 	int len, totlen;
-	for (int i = 0; i < 12; i+=2)
+	for (int i = 0; i < 12; i+2)
 	{
 		len = totlen = GetWindowTextLength(GetDlgItem(hDlg, editBoxArray[i]));
 		if (len > 0)
@@ -504,7 +504,7 @@ BOOL checkEditFields(HWND hDlg, planet_type *planet)
 				break;
 				default:
 				{
-					len = GetWindowTextLength(GetDlgItem(hDlg, editBoxArray[i+1])); break;
+					len = GetWindowTextLength(GetDlgItem(hDlg, ID_EDIT_PLANET_MASS2));
 					totlen += len;
 					buf = (char*)GlobalAlloc(GPTR, totlen + 2);
 					buf2 = (char*)GlobalAlloc(GPTR, len + 1);
