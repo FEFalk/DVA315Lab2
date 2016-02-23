@@ -350,7 +350,7 @@ BOOL checkFields(HWND hDlg, HWND localPlanetsList)
 		ID_EDIT_PLANET_Y_V2
 	};
 	int len, totlen;
-	for (int i = 0; i < 7; i++)
+	for (int i = 0; i < 7; i+=2)
 	{
 		len = totlen = GetWindowTextLength(GetDlgItem(hDlg, editBoxArray[i]));
 		if (len > 0)
@@ -383,7 +383,7 @@ BOOL checkFields(HWND hDlg, HWND localPlanetsList)
 			break;
 			default:
 			{
-				len = GetWindowTextLength(GetDlgItem(hDlg, ID_EDIT_PLANET_MASS2));
+				len = GetWindowTextLength(GetDlgItem(hDlg, editBoxArray[i + 1]));
 				totlen += len;
 				buf = (char*)GlobalAlloc(GPTR, totlen + 2);
 				buf2 = (char*)GlobalAlloc(GPTR, len + 1);

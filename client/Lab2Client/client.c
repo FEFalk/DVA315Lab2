@@ -581,35 +581,35 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 							setText = SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_LIFE), WM_SETTEXT, 0, buff);
 
 							_itoa(selectedPlanet->mass, str, 10);
-							strtok_r(str, ".", &ptr);
+							strtok(str, ".", &ptr);
 							sprintf(buff, str);
 							setText = SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_MASS), WM_SETTEXT, 0, buff);
 							sprintf(buff2, ptr);
 							setText = SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_MASS2), WM_SETTEXT, 0, buff2);
 
 							_itoa(selectedPlanet->sx, str, 10);
-							strtok_r(str, ".", &ptr);
+							strtok(str, ".", &ptr);
 							sprintf(buff, str);
 							setText = SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_POSITIONX), WM_SETTEXT, 0, buff);
 							sprintf(buff2, ptr);
 							setText = SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_POSITIONX2), WM_SETTEXT, 0, buff2);
 
 							_itoa(selectedPlanet->sy, str, 10);
-							strtok_r(str, ".", &ptr);
+							strtok(str, ".", &ptr);
 							sprintf(buff, str);
 							setText = SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_POSITIONY), WM_SETTEXT, 0, buff);
 							sprintf(buff2, ptr);
 							setText = SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_POSITIONY2), WM_SETTEXT, 0, buff2);
 
 							_itoa(selectedPlanet->vx, str, 10);
-							strtok_r(str, ".", &ptr);
+							strtok(str, ".", &ptr);
 							sprintf(buff, str);
 							setText = SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_VELOCITYX), WM_SETTEXT, 0, buff);
 							sprintf(buff2, ptr);
 							setText = SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_VELOCITYX2), WM_SETTEXT, 0, buff2);
 
 							_itoa(selectedPlanet->vy, str, 10);
-							strtok_r(str, ".", &ptr);
+							strtok(str, ".", &ptr);
 							sprintf(buff, str);
 							setText = SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_VELOCITYY), WM_SETTEXT, 0, buff);
 							sprintf(buff2, ptr);
