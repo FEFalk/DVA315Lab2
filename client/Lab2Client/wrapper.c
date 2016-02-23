@@ -327,11 +327,10 @@ BOOL checkFieldsEmpty(HWND hDlg)
 	}
 	return TRUE;
 }
-BOOL checkFields(HWND hDlg)
+BOOL checkFields(HWND hDlg, HWND localPlanetsList)
 {
 	planet_type *planet = (planet_type*)calloc(1, sizeof(planet_type));
 	planet->next = NULL;
-	HWND localPlanetsList = GetDlgItem(GetParent(hDlg), ID_LIST_LOCAL_PLANETS);
 	char *p;
 	int i, bufInt = 0;
 	char* buf, *buf2;
