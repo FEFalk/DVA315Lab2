@@ -325,20 +325,34 @@ void showEditPlanet(HWND hDlg, BOOL hide) {
 	{
 		ShowWindow(GetDlgItem(hDlg, ID_BUTTON_EDIT_OK), SW_SHOW);
 		ShowWindow(GetDlgItem(hDlg, ID_BUTTON_EDIT_CANCEL), SW_SHOW);
-		SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_NAME), EM_SETREADONLY, hide, 0);
+		SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_NAME), EM_SETREADONLY, hide, 0); //hide is a bool
+		SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_LIFE), EM_SETREADONLY, hide, 0);
+		SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_MASS), EM_SETREADONLY, hide, 0);
+		SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_MASS2), EM_SETREADONLY, hide, 0);
 		SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_POSITIONY), EM_SETREADONLY, hide, 0);
 		SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_POSITIONX), EM_SETREADONLY, hide, 0);
 		SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_VELOCITYY), EM_SETREADONLY, hide, 0);
 		SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_VELOCITYX), EM_SETREADONLY, hide, 0);
+		SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_POSITIONY2), EM_SETREADONLY, hide, 0);
+		SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_POSITIONX2), EM_SETREADONLY, hide, 0);
+		SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_VELOCITYY2), EM_SETREADONLY, hide, 0);
+		SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_VELOCITYX2), EM_SETREADONLY, hide, 0);
 	}
 	else {
 		ShowWindow(GetDlgItem(hDlg, ID_BUTTON_EDIT_OK), SW_HIDE);
 		ShowWindow(GetDlgItem(hDlg, ID_BUTTON_EDIT_CANCEL), SW_HIDE);
 		SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_NAME), EM_SETREADONLY, hide, 0);
+		SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_LIFE), EM_SETREADONLY, hide, 0);
+		SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_MASS), EM_SETREADONLY, hide, 0);
+		SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_MASS2), EM_SETREADONLY, hide, 0);
 		SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_POSITIONY), EM_SETREADONLY, hide, 0);
 		SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_POSITIONX), EM_SETREADONLY, hide, 0);
 		SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_VELOCITYY), EM_SETREADONLY, hide, 0);
 		SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_VELOCITYX), EM_SETREADONLY, hide, 0);
+		SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_POSITIONY2), EM_SETREADONLY, hide, 0);
+		SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_POSITIONX2), EM_SETREADONLY, hide, 0);
+		SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_VELOCITYY2), EM_SETREADONLY, hide, 0);
+		SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_VELOCITYX2), EM_SETREADONLY, hide, 0);
 	}
 	
 }
@@ -381,6 +395,8 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				{
 					SendMessage(GetDlgItem(addPlanetDialog, ID_EDIT_PLANET_NAME), EM_SETSEL, 0, -1);
 					SendMessage(GetDlgItem(addPlanetDialog, ID_EDIT_PLANET_NAME), WM_CLEAR, 0, 0);
+					SendMessage(GetDlgItem(addPlanetDialog, ID_EDIT_PLANET_LIFE), EM_SETSEL, 0, -1);
+					SendMessage(GetDlgItem(addPlanetDialog, ID_EDIT_PLANET_LIFE), WM_CLEAR, 0, 0);
 					SendMessage(GetDlgItem(addPlanetDialog, ID_EDIT_PLANET_X_P), EM_SETSEL, 0, -1);
 					SendMessage(GetDlgItem(addPlanetDialog, ID_EDIT_PLANET_X_P), WM_CLEAR, 0, 0);
 					SendMessage(GetDlgItem(addPlanetDialog, ID_EDIT_PLANET_Y_P), EM_SETSEL, 0, -1);
@@ -391,8 +407,17 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					SendMessage(GetDlgItem(addPlanetDialog, ID_EDIT_PLANET_Y_V), WM_CLEAR, 0, 0);
 					SendMessage(GetDlgItem(addPlanetDialog, ID_EDIT_PLANET_MASS), EM_SETSEL, 0, -1);
 					SendMessage(GetDlgItem(addPlanetDialog, ID_EDIT_PLANET_MASS), WM_CLEAR, 0, 0);
-					SendMessage(GetDlgItem(addPlanetDialog, ID_EDIT_PLANET_LIFE), EM_SETSEL, 0, -1);
-					SendMessage(GetDlgItem(addPlanetDialog, ID_EDIT_PLANET_LIFE), WM_CLEAR, 0, 0);
+					SendMessage(GetDlgItem(addPlanetDialog, ID_EDIT_PLANET_X_P2), EM_SETSEL, 0, -1);
+					SendMessage(GetDlgItem(addPlanetDialog, ID_EDIT_PLANET_X_P2), WM_CLEAR, 0, 0);
+					SendMessage(GetDlgItem(addPlanetDialog, ID_EDIT_PLANET_Y_P2), EM_SETSEL, 0, -1);
+					SendMessage(GetDlgItem(addPlanetDialog, ID_EDIT_PLANET_Y_P2), WM_CLEAR, 0, 0);
+					SendMessage(GetDlgItem(addPlanetDialog, ID_EDIT_PLANET_X_V2), EM_SETSEL, 0, -1);
+					SendMessage(GetDlgItem(addPlanetDialog, ID_EDIT_PLANET_X_V2), WM_CLEAR, 0, 0);
+					SendMessage(GetDlgItem(addPlanetDialog, ID_EDIT_PLANET_Y_V2), EM_SETSEL, 0, -1);
+					SendMessage(GetDlgItem(addPlanetDialog, ID_EDIT_PLANET_Y_V2), WM_CLEAR, 0, 0);
+					SendMessage(GetDlgItem(addPlanetDialog, ID_EDIT_PLANET_MASS2), EM_SETSEL, 0, -1);
+					SendMessage(GetDlgItem(addPlanetDialog, ID_EDIT_PLANET_MASS2), WM_CLEAR, 0, 0);
+					
 					ShowWindow(addPlanetDialog, SW_SHOW);
 					return TRUE;
 				}
@@ -402,27 +427,38 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				// Get selected index. (In ListBox)
 				int lbItem = (int)SendMessage(localPlanetsList, LB_GETCURSEL, 0, 0);
 				if (lbItem == LB_ERR) {
-					MessageBox(hDlg, "You must target a planet", "Warning!",
+					MessageBox(hDlg, "Select a planet", "Warning!",
 						MB_OK | MB_ICONINFORMATION);
 					break;
 				}
-				showEditPlanet(hDlg, FALSE);
+				showEditPlanet(hDlg, FALSE); // Enable editboxes in edit window
 				return TRUE;
 			}
 			case ID_BUTTON_EDIT_OK:
 			{
-
 				HWND localPlanetsList = GetDlgItem(hDlg, ID_LIST_LOCAL_PLANETS);
 				// Get selected index. (In ListBox)
 				int lbItem = (int)SendMessage(localPlanetsList, LB_GETCURSEL, 0, 0);
 
 				TCHAR tempString[128];
+				
+				if (checkEditFields(hDlg, getPlanetAt(lbItem))) //Check fields for wrong input and store floats in one variable
+				{
+					int pos = (int)SendMessage(localPlanetsList, LB_GETCURSEL, 0, 0);
+					SendMessage(localPlanetsList, LB_DELETESTRING, pos, (LPARAM)tempString);
+					SendMessage(localPlanetsList, LB_ADDSTRING, pos, (LPARAM)tempString);
+				}
+				else
+				{
+					//Do something when a field is empty
+				}
+				//store the input from the boxes in the struct
 				GetWindowText(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_NAME), tempString, 128);
 				sprintf(getPlanetAt(lbItem)->name, tempString);
-				int pos = (int)SendMessage(localPlanetsList, LB_GETCURSEL, 0, 0);
-				SendMessage(localPlanetsList, LB_DELETESTRING, pos, (LPARAM)tempString);
-				SendMessage(localPlanetsList, LB_ADDSTRING, pos, (LPARAM)tempString);
-
+				GetWindowText(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_LIFE), tempString, 128);
+				getPlanetAt(lbItem)->life = atoi(tempString);
+				GetWindowText(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_MASS), tempString, 128);
+				getPlanetAt(lbItem)->mass = atof(tempString);
 				GetWindowText(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_POSITIONX), tempString, 128);
 				getPlanetAt(lbItem)->sx = atof(tempString);
 				GetWindowText(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_POSITIONY), tempString, 128);
@@ -431,9 +467,14 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				getPlanetAt(lbItem)->vx = atof(tempString);
 				GetWindowText(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_VELOCITYY), tempString, 128);
 				getPlanetAt(lbItem)->vy = atof(tempString);
-
+				
+				//Clear all input from edit boxes.
 				SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_NAME), EM_SETSEL, 0, -1);
 				SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_NAME), WM_CLEAR, 0, 0);
+				SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_LIFE), EM_SETSEL, 0, -1);
+				SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_LIFE), WM_CLEAR, 0, 0);
+				SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_MASS), EM_SETSEL, 0, -1);
+				SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_MASS), WM_CLEAR, 0, 0);
 				SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_POSITIONX), EM_SETSEL, 0, -1);
 				SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_POSITIONX), WM_CLEAR, 0, 0);
 				SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_POSITIONY), EM_SETSEL, 0, -1);
@@ -442,8 +483,16 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_VELOCITYX), WM_CLEAR, 0, 0);
 				SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_VELOCITYY), EM_SETSEL, 0, -1);
 				SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_VELOCITYY), WM_CLEAR, 0, 0);
-
-				SendMessage(ID_EDIT_LOCAL_PLANET_INFO_NAME, WM_CLEAR, 0, 0);
+				SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_MASS2), EM_SETSEL, 0, -1);
+				SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_MASS2), WM_CLEAR, 0, 0);
+				SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_POSITIONX2), EM_SETSEL, 0, -1);
+				SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_POSITIONX2), WM_CLEAR, 0, 0);
+				SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_POSITIONY2), EM_SETSEL, 0, -1);
+				SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_POSITIONY2), WM_CLEAR, 0, 0);
+				SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_VELOCITYX2), EM_SETSEL, 0, -1);
+				SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_VELOCITYX2), WM_CLEAR, 0, 0);
+				SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_VELOCITYY2), EM_SETSEL, 0, -1);
+				SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_VELOCITYY2), WM_CLEAR, 0, 0);
 
 				showEditPlanet(hDlg, TRUE);
 				return TRUE;
@@ -518,21 +567,53 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 						{
 							HWND localPlanetsList = GetDlgItem(hDlg, ID_LIST_LOCAL_PLANETS);
 							TCHAR buff[MAX_PATH];
+							TCHAR buff2[MAX_PATH];
 							// Get selected index. (In ListBox)
 							int lbItem = (int)SendMessage(localPlanetsList, LB_GETCURSEL, 0, 0);
-
 							planet_type *selectedPlanet = getPlanetAt(lbItem);
-							// Do something with the data from Roster[i]
+							char str[128];
+							char *ptr;
+
 							sprintf(buff, selectedPlanet->name);
 							BOOL setText = SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_NAME), WM_SETTEXT, 0, buff);
-							sprintf(buff, "%lf", selectedPlanet->sx);
+							_itoa(selectedPlanet->life, str, 10);
+							sprintf(buff, str);
+							setText = SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_LIFE), WM_SETTEXT, 0, buff);
+
+							_itoa(selectedPlanet->mass, str, 10);
+							strtok_r(str, ".", &ptr);
+							sprintf(buff, str);
+							setText = SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_MASS), WM_SETTEXT, 0, buff);
+							sprintf(buff2, ptr);
+							setText = SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_MASS2), WM_SETTEXT, 0, buff2);
+
+							_itoa(selectedPlanet->sx, str, 10);
+							strtok_r(str, ".", &ptr);
+							sprintf(buff, str);
 							setText = SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_POSITIONX), WM_SETTEXT, 0, buff);
-							sprintf(buff, "%lf", selectedPlanet->sy);
+							sprintf(buff2, ptr);
+							setText = SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_POSITIONX2), WM_SETTEXT, 0, buff2);
+
+							_itoa(selectedPlanet->sy, str, 10);
+							strtok_r(str, ".", &ptr);
+							sprintf(buff, str);
 							setText = SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_POSITIONY), WM_SETTEXT, 0, buff);
-							sprintf(buff, "%lf", selectedPlanet->vx);
+							sprintf(buff2, ptr);
+							setText = SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_POSITIONY2), WM_SETTEXT, 0, buff2);
+
+							_itoa(selectedPlanet->vx, str, 10);
+							strtok_r(str, ".", &ptr);
+							sprintf(buff, str);
 							setText = SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_VELOCITYX), WM_SETTEXT, 0, buff);
-							sprintf(buff, "%lf", selectedPlanet->vy);
+							sprintf(buff2, ptr);
+							setText = SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_VELOCITYX2), WM_SETTEXT, 0, buff2);
+
+							_itoa(selectedPlanet->vy, str, 10);
+							strtok_r(str, ".", &ptr);
+							sprintf(buff, str);
 							setText = SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_VELOCITYY), WM_SETTEXT, 0, buff);
+							sprintf(buff2, ptr);
+							setText = SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_VELOCITYY2), WM_SETTEXT, 0, buff2);
 							return TRUE;
 						}
 					}
@@ -583,6 +664,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 			DispatchMessage(&msg); /* send it to dialog procedure */
 		}
 	}
+	return 0;
 }
 
 
