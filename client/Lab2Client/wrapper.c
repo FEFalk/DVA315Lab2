@@ -350,7 +350,7 @@ BOOL checkFields(HWND hDlg, HWND localPlanetsList)
 		ID_EDIT_PLANET_Y_V2
 	};
 	int len, totlen;
-	for (int i = 0; i < 7; i++)
+	for (int i = 0; i < 12; i+=2)
 	{
 		len = totlen = GetWindowTextLength(GetDlgItem(hDlg, editBoxArray[i]));
 		if (len > 0)
@@ -373,9 +373,8 @@ BOOL checkFields(HWND hDlg, HWND localPlanetsList)
 			break;
 			case ID_EDIT_PLANET_LIFE:
 			{
-				totlen += len;
-				buf = (char*)GlobalAlloc(GPTR, totlen + 2);
-				GetDlgItemText(hDlg, editBoxArray[i], buf, len + 1);
+				buf = (char*)GlobalAlloc(GPTR, len+1);
+				GetDlgItemText(hDlg, editBoxArray[i], buf, len+1);
 
 				planet->life = atoi(buf);
 				i--;
@@ -393,11 +392,11 @@ BOOL checkFields(HWND hDlg, HWND localPlanetsList)
 				strcat(buf, ".");
 				strcat(buf, buf2);
 				switch (i) {
-				case 3: planet->mass = atof(buf); break;
-				case 5: planet->sx = atof(buf); break;
-				case 7: planet->sy = atof(buf); break;
-				case 9: planet->vx = atof(buf); break;
-				case 11: planet->vy = atof(buf); break;
+				case 2: planet->mass = atof(buf); break;
+				case 4: planet->sx = atof(buf); break;
+				case 6: planet->sy = atof(buf); break;
+				case 8: planet->vx = atof(buf); break;
+				case 10: planet->vy = atof(buf); break;
 				default: break;
 				}
 			}
@@ -416,22 +415,22 @@ BOOL checkFields(HWND hDlg, HWND localPlanetsList)
 				sprintf(fieldName, "Name");
 				break;
 			case 1:
-				sprintf(fieldName, "X-Position");
+				sprintf(fieldName, "Life");
 				break;
 			case 2:
-				sprintf(fieldName, "Y-Position");
-				break;
-			case 3:
-				sprintf(fieldName, "X-Velocity");
-				break;
-			case 4:
-				sprintf(fieldName, "Y-Velocity");
-				break;
-			case 5:
 				sprintf(fieldName, "Mass");
 				break;
+			case 4:
+				sprintf(fieldName, "X-Position");
+				break;
 			case 6:
-				sprintf(fieldName, "Life");
+				sprintf(fieldName, "Y-Position");
+				break;
+			case 8:
+				sprintf(fieldName, "X-Velocity");
+				break;
+			case 10:
+				sprintf(fieldName, "Y-Velocity");
 				break;
 			default:
 				break;
@@ -448,13 +447,10 @@ BOOL checkFields(HWND hDlg, HWND localPlanetsList)
 	addPlanet(planet);
 	return TRUE;
 }
-BOOL checkEditFields(HWND hDlg, planet_type *planet)
+BOOL checkEditFields(HWND hDlg)
 {
-	planet->next = NULL;
 	HWND localPlanetsList = GetDlgItem(hDlg, ID_LIST_LOCAL_PLANETS);
-	char *p;
-	int i, bufInt = 0;
-	char* buf, *buf2;
+	char* buf;
 	int editBoxArray[12] =
 	{
 		ID_EDIT_LOCAL_PLANET_INFO_NAME,
@@ -470,62 +466,19 @@ BOOL checkEditFields(HWND hDlg, planet_type *planet)
 		ID_EDIT_LOCAL_PLANET_INFO_VELOCITYY,
 		ID_EDIT_LOCAL_PLANET_INFO_VELOCITYY2
 	};
-	int len, totlen;
-	for (int i = 0; i < 12; i+2)
+	int len;
+	for (int i = 0; i < 12; i++)
 	{
-		len = totlen = GetWindowTextLength(GetDlgItem(hDlg, editBoxArray[i]));
-		if (len > 0)
+		len = GetWindowTextLength(GetDlgItem(hDlg, editBoxArray[i]));
+		if (editBoxArray[i] == ID_EDIT_LOCAL_PLANET_INFO_NAME)
 		{
-			switch (editBoxArray[i])
-			{
-				case ID_EDIT_LOCAL_PLANET_INFO_NAME:
-				{
-					buf = (char*)GlobalAlloc(GPTR, len + 1);
-					GetDlgItemText(hDlg, editBoxArray[i], buf, len + 1);
-					if (strlen(buf) > 20)MessageBox(hDlg, TEXT("Error too big!\n"), TEXT("Error!"), MB_OK);
-					else
-					{
-						sprintf(planet->name, buf);
-						if ((p = strchr(planet->name, '\n')) != NULL)
-							*p = '\0';
-					}
-					i--;
-				}
-				break;
-				case ID_EDIT_LOCAL_PLANET_INFO_LIFE:
-				{
-					totlen += len;
-					buf = (char*)GlobalAlloc(GPTR, totlen + 2);
-					GetDlgItemText(hDlg, editBoxArray[i], buf, len + 1);
-
-					planet->life = atoi(buf);
-					i--;
-				}
-				break;
-				default:
-				{
-					len = GetWindowTextLength(GetDlgItem(hDlg, ID_EDIT_PLANET_MASS2));
-					totlen += len;
-					buf = (char*)GlobalAlloc(GPTR, totlen + 2);
-					buf2 = (char*)GlobalAlloc(GPTR, len + 1);
-					GetDlgItemText(hDlg, editBoxArray[i], buf, len + 1);
-					GetDlgItemText(hDlg, editBoxArray[i + 1], buf2, len + 1);
-
-					strcat(buf, ".");
-					strcat(buf, buf2);
-					switch (i) {
-						case 3: planet->mass = atof(buf); break;
-						case 5: planet->sx = atof(buf); break;
-						case 7: planet->sy = atof(buf); break;
-						case 9: planet->vx = atof(buf); break;
-						case 11: planet->vy = atof(buf); break;
-						default: break;
-					}
-				}
-				break;
-			}
+			buf = (char*)GlobalAlloc(GPTR, len + 1);
+			GetDlgItemText(hDlg, editBoxArray[i], buf, len + 1);
+			if (strlen(buf) > 20)
+				MessageBox(hDlg, TEXT("Error too big!\n"), TEXT("Error!"), MB_OK);
+			continue;
 		}
-		else
+		else if (len <= 0 || len > 8)
 		{
 			//error
 			char msg[100];
@@ -536,37 +489,108 @@ BOOL checkEditFields(HWND hDlg, planet_type *planet)
 				sprintf(fieldName, "Name");
 				break;
 			case 1:
-				sprintf(fieldName, "X-Position");
+				sprintf(fieldName, "Life");
 				break;
 			case 2:
-				sprintf(fieldName, "Y-Position");
-				break;
-			case 3:
-				sprintf(fieldName, "X-Velocity");
-				break;
-			case 4:
-				sprintf(fieldName, "Y-Velocity");
-				break;
-			case 5:
 				sprintf(fieldName, "Mass");
 				break;
+			case 3:
+				sprintf(fieldName, "Mass (decimals)");
+				break;
+			case 4:
+				sprintf(fieldName, "X-Position");
+				break;
+			case 5:
+				sprintf(fieldName, "X-Position (decimals)");
+				break;
 			case 6:
-				sprintf(fieldName, "Life");
+				sprintf(fieldName, "Y-Position");
+				break;
+			case 7:
+				sprintf(fieldName, "Y-Position (decimals)");
+				break;
+			case 8:
+				sprintf(fieldName, "X-Velocity");
+				break;
+			case 9:
+				sprintf(fieldName, "X-Velocity (decimals");
+				break;
+			case 10:
+				sprintf(fieldName, "Y-Velocity");
+				break;
+			case 11:
+				sprintf(fieldName, "Y-Velocity (decimals)");
 				break;
 			default:
 				break;
 
 			}
-			sprintf(msg, "The field '%s' is empty! Please fill out all information.", fieldName);
-			MessageBox(hDlg, msg, "Warning!",
-				MB_OK | MB_ICONINFORMATION);
+			if (len <= 0)
+			{
+				sprintf(msg, "The field '%s' is empty! Please fill out all information.", fieldName);
+				MessageBox(hDlg, msg, "Warning!",
+					MB_OK | MB_ICONINFORMATION);
+			}
+			else if (len > 20)
+			{
+				sprintf(msg, "The field '%s' contains too many digits! Please enter values with a maximum of 8 digits.", fieldName);
+				MessageBox(hDlg, msg, "Warning!",
+					MB_OK | MB_ICONINFORMATION);
+			}
+
 			return FALSE;
 		}
 	}
-	planet->next = NULL;
 	GlobalFree((HANDLE)buf);
-	addPlanet(planet);
 	return TRUE;
+}
+
+void selectedPlanet(HWND hDlg)
+{
+	HWND localPlanetsList = GetDlgItem(hDlg, ID_LIST_LOCAL_PLANETS);
+	char *buff = (char *)calloc(MAX_PATH, sizeof(char));
+	char *buff2 = (char *)calloc(MAX_PATH, sizeof(char));
+
+	// Get selected index. (In ListBox)
+	int lbItem = (int)SendMessage(localPlanetsList, LB_GETCURSEL, 0, 0);
+	planet_type *selectedPlanet = getPlanetAt(lbItem);
+	char str[128];
+	int i = 0;
+
+	SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_NAME), WM_SETTEXT, 0, selectedPlanet->name);
+	_itoa(selectedPlanet->life, str, 10);
+	SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_LIFE), WM_SETTEXT, 0, str);
+
+	sprintf(str, "%.3f", selectedPlanet->mass);
+	stringSeparate(&str, buff, &buff2);
+
+	SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_MASS), WM_SETTEXT, 0, buff);
+	SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_MASS2), WM_SETTEXT, 0, buff2);
+
+	sprintf(str, "%.3f", selectedPlanet->sx);
+	stringSeparate(&str, buff, &buff2);
+
+	SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_POSITIONX), WM_SETTEXT, 0, buff);
+	SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_POSITIONX2), WM_SETTEXT, 0, buff2);
+
+	sprintf(str, "%.3f", selectedPlanet->sy);
+	stringSeparate(&str, buff, &buff2);
+
+	SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_POSITIONY), WM_SETTEXT, 0, buff);
+	SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_POSITIONY2), WM_SETTEXT, 0, buff2);
+
+	sprintf(str, "%.3f", selectedPlanet->vx);
+	stringSeparate(&str, buff, &buff2);
+
+	SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_VELOCITYX), WM_SETTEXT, 0, buff);
+	SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_VELOCITYX2), WM_SETTEXT, 0, buff2);
+
+	sprintf(str, "%.3f", selectedPlanet->vy);
+	stringSeparate(&str, buff, &buff2);
+
+	SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_VELOCITYY), WM_SETTEXT, 0, buff);
+	SendMessage(GetDlgItem(hDlg, ID_EDIT_LOCAL_PLANET_INFO_VELOCITYY2), WM_SETTEXT, 0, buff2);
+
 }
 
 HANDLE OpenFileDialog(char* string, DWORD accessMode, DWORD howToCreate)
@@ -600,7 +624,19 @@ HANDLE OpenFileDialog(char* string, DWORD accessMode, DWORD howToCreate)
 		howToCreate,
 		FILE_ATTRIBUTE_NORMAL,
 		NULL);
-
-
 }
 
+void stringSeparate(char *s, char *digitString, char **decimalString)
+{
+	strcpy(digitString, s);
+	*decimalString = s;
+	for (int i = 0;; i++)
+	{
+		if (s[i] == '.')
+		{
+			*decimalString += i + 1;
+			digitString[i] = '\0';
+			break;
+		}
+	}
+}
